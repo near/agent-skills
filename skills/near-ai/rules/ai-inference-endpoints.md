@@ -40,11 +40,24 @@ import os
 from nearai import NearAI
 from typing import Optional
 
-# Initialize NEAR AI client
-nearai = NearAI(
-    account_id=os.getenv("NEAR_ACCOUNT_ID"),
-    private_key=os.getenv("NEAR_PRIVATE_KEY"),
-)
+# Initialize NEAR AI client with environment validation
+def init_nearai() -> NearAI:
+    """Initialize NEAR AI client with proper error handling."""
+    account_id = os.getenv("NEAR_ACCOUNT_ID")
+    private_key = os.getenv("NEAR_PRIVATE_KEY")
+    
+    if not account_id or not private_key:
+        raise ValueError(
+            "Missing required environment variables: NEAR_ACCOUNT_ID and NEAR_PRIVATE_KEY. "
+            "Please set these variables to authenticate with NEAR AI."
+        )
+    
+    return NearAI(
+        account_id=account_id,
+        private_key=private_key,
+    )
+
+nearai = init_nearai()
 
 def generate_response(
     prompt: str,

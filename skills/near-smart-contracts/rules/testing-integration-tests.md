@@ -153,6 +153,7 @@ assert!(format!("{:?}", result).contains("Expected error message"));
 
 ## Additional Considerations
 
+- Add `near-workspaces` as a dev dependency in Cargo.toml: `near-workspaces = "0.10"`
 - Use `near_workspaces::sandbox()` for isolated testing
 - Test both success and failure cases
 - Verify gas consumption is reasonable
