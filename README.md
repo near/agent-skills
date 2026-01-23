@@ -45,9 +45,20 @@ TypeScript library for NEAR Protocol with an intuitive, fetch-like API.
 Install individual skills using the CLI:
 
 ```bash
+# pnpm
+pnpm dlx skills add https://github.com/NEARBuilders/near-skills --skill near-api-js
+
+# npm
 npx skills add https://github.com/NEARBuilders/near-skills --skill near-api-js
-npx skills add https://github.com/NEARBuilders/near-skills --skill near-kit
+
+# yarn
+yarn dlx skills add https://github.com/NEARBuilders/near-skills --skill near-api-js
+
+# bun
+bunx skills add https://github.com/NEARBuilders/near-skills --skill near-api-js
 ```
+
+Replace `--skill near-api-js` with `--skill near-kit` to install the other skill.
 
 ## Usage
 
