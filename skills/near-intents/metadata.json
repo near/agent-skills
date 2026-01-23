@@ -1,0 +1,79 @@
+{
+  "name": "near-intents",
+  "title": "NEAR Intents 1Click API",
+  "description": "Cross-chain swap integration using the NEAR Intents 1Click API. Covers API endpoints, chain-specific deposit transactions for EVM/Solana/NEAR/TON/Stellar/Tron, TypeScript patterns, and React hooks.",
+  "version": "1.0.0",
+  "author": "Community",
+  "tags": [
+    "near",
+    "intents",
+    "cross-chain",
+    "swap",
+    "defi",
+    "blockchain",
+    "ethereum",
+    "solana",
+    "bitcoin",
+    "1click"
+  ],
+  "triggers": [
+    "cross-chain swap",
+    "cross chain swap",
+    "swap tokens between chains",
+    "swap across chains",
+    "bridge tokens",
+    "token bridge",
+    "1click api",
+    "1click swap",
+    "near intents",
+    "intents api",
+    "defuse protocol",
+    "defuse swap",
+    "multi-chain swap",
+    "multichain swap",
+    "swap eth to sol",
+    "swap usdc cross chain",
+    "transfer tokens between blockchains",
+    "swap from ethereum to solana",
+    "swap from base to near",
+    "cross chain transfer",
+    "blockchain swap",
+    "dex aggregator",
+    "swap bitcoin to ethereum",
+    "swap sol to usdc"
+  ],
+  "categories": [
+    "blockchain",
+    "defi",
+    "integration"
+  ],
+  "supportedChains": [
+    "ethereum",
+    "base",
+    "arbitrum",
+    "optimism",
+    "polygon",
+    "bsc",
+    "avalanche",
+    "near",
+    "solana",
+    "ton",
+    "stellar",
+    "tron",
+    "bitcoin",
+    "dogecoin",
+    "zcash",
+    "sui"
+  ],
+  "resources": {
+    "documentation": "https://docs.near-intents.org/near-intents/integration/distribution-channels/1click-api",
+    "openapi": "https://1click.chaindefuser.com/docs/v0/openapi.yaml",
+    "partnersPortal": "https://partners.near-intents.org/",
+    "examples": "https://github.com/near-examples/near-intents-examples",
+    "sdks": {
+      "typescript": "https://github.com/defuse-protocol/one-click-sdk-typescript",
+      "go": "https://github.com/defuse-protocol/one-click-sdk-go",
+      "rust": "https://github.com/defuse-protocol/one-click-sdk-rs"
+    }
+  }
+}
