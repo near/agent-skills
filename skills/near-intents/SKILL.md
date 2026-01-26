@@ -50,6 +50,7 @@ GET /v0/tokens → POST /v0/quote (dry) → POST /v0/quote (wet) → Deposit TX 
    - [api-quote](rules/api-quote.md) - Get swap quote, dry=true for preview, dry=false for deposit address
    - [api-deposit-submit](rules/api-deposit-submit.md) - Notify API after deposit to speed up processing
    - [api-status](rules/api-status.md) - Poll until terminal state (SUCCESS, FAILED, REFUNDED)
+   - [api-any-input-withdrawals](rules/api-any-input-withdrawals.md) - Query withdrawals for ANY_INPUT quotes
 
 3. **Chain Deposits (HIGH)**
    - [deposit-evm](rules/deposit-evm.md) - Ethereum, Base, Arbitrum, Polygon, BSC transfers
@@ -65,6 +66,9 @@ GET /v0/tokens → POST /v0/quote (dry) → POST /v0/quote (wet) → Deposit TX 
 5. **Advanced (LOW)**
    - [intents-balance](rules/intents-balance.md) - Hold balances in intents.near for faster swaps
    - [passive-deposit](rules/passive-deposit.md) - QR code flow for manual transfers
+
+6. **References**
+   - [concepts](references/concepts.md) - Swap lifecycle, statuses, CEX warning, authentication
 
 ## Resources
 
