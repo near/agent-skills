@@ -13,6 +13,7 @@ AI agent skills for NEAR Protocol blockchain development.
 | [near-kit](skills/near-kit/) | [near-kit](https://github.com/r-near/near-kit) | TypeScript SDK with intuitive API, type-safe contracts, sandbox testing |
 | [near-intents](skills/near-intents/) | [1Click API](https://docs.near-intents.org/) | Cross-chain swaps via REST API across EVM, Solana, NEAR, TON, Stellar, Tron |
 | [near-smart-contracts](skills/near-smart-contracts/) | - | Rust smart contract development, security, state management, cross-contract calls |
+| [near-contract-audit](skills/near-contract-audit/) | - | Security audit methodology and vulnerability reference for NEAR Rust contracts |
 
 ## Install
 
@@ -32,7 +33,7 @@ npx skills add near/agent-skills --skill <skill-name>
 bunx skills add near/agent-skills --skill <skill-name>
 ```
 
-Replace `<skill-name>` with: `near-ai`, `near-api-js`, `near-connect`, `near-connect-hooks`, `near-intents`, `near-kit` or `near-smart-contracts`.
+Replace `<skill-name>` with: `near-ai`, `near-api-js`, `near-connect`, `near-connect-hooks`, `near-intents`, `near-kit`, `near-smart-contracts` or `near-contract-audit`.
 
 ## Usage
 
