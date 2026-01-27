@@ -1,6 +1,6 @@
 ---
 name: near-kit
-description: TypeScript library for NEAR Protocol blockchain interaction. Use this skill when writing code that interacts with NEAR Protocol, including viewing contract data, calling contract methods, sending NEAR tokens, building transactions, creating type-safe contract wrappers, integrating wallets (Wallet Selector, HOT Connect), managing keys, testing with sandbox, meta-transactions (NEP-366), and message signing (NEP-413).
+description: TypeScript library for NEAR Protocol blockchain interaction. Use this skill when writing code that interacts with NEAR Protocol, including viewing contract data, calling contract methods, sending NEAR tokens, building transactions, creating type-safe contract wrappers, integrating wallets (Wallet Selector, HOT Connect), React hooks and providers (@near-kit/react), managing keys, testing with sandbox, meta-transactions (NEP-366), and message signing (NEP-413).
 ---
 
 # near-kit
@@ -139,6 +139,37 @@ connector.connect()
 
 **For HOT Connect and Wallet Selector integration, see [references/wallets.md](references/wallets.md)**
 
+## React Bindings (@near-kit/react)
+
+```tsx
+import { NearProvider, useNear, useView, useCall } from "@near-kit/react"
+
+function App() {
+  return (
+    <NearProvider config={{ network: "testnet" }}>
+      <Counter />
+    </NearProvider>
+  )
+}
+
+function Counter() {
+  const { data: count, isLoading } = useView<{}, number>({
+    contractId: "counter.testnet",
+    method: "get_count",
+  })
+
+  const { mutate: increment, isPending } = useCall({
+    contractId: "counter.testnet",
+    method: "increment",
+  })
+
+  if (isLoading) return <div>Loading...</div>
+  return <button onClick={() => increment({})} disabled={isPending}>Count: {count}</button>
+}
+```
+
+**For all React hooks, React Query/SWR integration, and SSR patterns, see [references/react.md](references/react.md)**
+
 ## Testing with Sandbox
 
 ```typescript
@@ -217,6 +248,7 @@ Gas.parse("30 Tgas")    // bigint in gas units
 
 For detailed documentation on specific topics:
 
+- **[React Bindings](references/react.md)** - Provider, hooks, React Query/SWR, SSR/Next.js
 - **[Wallet Integration](references/wallets.md)** - HOT Connect, Wallet Selector, universal patterns
 - **[Transaction Builder](references/transactions.md)** - All actions, meta-transactions (NEP-366)
 - **[Keys and Testing](references/keys-and-testing.md)** - Key stores, utilities, sandbox, NEP-413 signing
