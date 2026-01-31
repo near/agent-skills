@@ -77,7 +77,7 @@ near-intents-cli deposit --token USDC --blockchain eth
 - Ethereum
 - Solana
 - Stellar (with memo support)
-- And more chains supported by the Defuse Protocol
+- And more chains supported by the Near Intents
 
 ## Common commands
 
