@@ -23,7 +23,7 @@ import {
   FunctionCallError, 
   InsufficientBalanceError,
   NearError 
-} from 'near-connect-hooks'
+} from 'near-kit'
 
 async function handleTransaction(): Promise<void> {
   try {
