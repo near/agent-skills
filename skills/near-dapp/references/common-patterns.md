@@ -247,25 +247,7 @@ async function transferFTWithStorage({
 ## Unit Conversion Utilities
 
 ```tsx
-const NEAR_DECIMALS = 24
-const USDC_DECIMALS = 6
-const USDT_DECIMALS = 6
-
-function toYoctoNear(near: string): string {
-  return (BigInt(Math.floor(parseFloat(near) * 1e6)) * BigInt(1e18)).toString()
-}
-
-function fromYoctoNear(yocto: string): string {
-  return (Number(yocto) / 1e24).toFixed(4)
-}
-
-function formatToken(amount: string, decimals: number, precision = 2): string {
-  return (Number(amount) / Math.pow(10, decimals)).toFixed(precision)
-}
-
-// Usage
-toYoctoNear('1.5')  // '1500000000000000000000000'
-formatToken('1000000', USDC_DECIMALS)  // '1.00'
+import { yoctoToNear, nearToYocto } from "near-api-js";
 ```
 
 ## Responsive Wallet Button

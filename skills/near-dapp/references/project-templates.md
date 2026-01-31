@@ -4,6 +4,23 @@ Complete setup guides for NEAR dApps with React Query integration.
 
 ## Vite + React + TypeScript
 
+You have two options to create a Vite + React NEAR dApp:
+
+### Option 1: Using create-near-app (Recommended)
+
+The official NEAR CLI creates a production-ready scaffold with wallet integration:
+
+```bash
+npx create-near-app@latest hello-near --frontend vite-react
+cd hello-near
+npm run dev
+```
+
+- GitHub: [https://github.com/near/create-near-app](https://github.com/near/create-near-app)
+- Live Example: [https://near-examples.github.io/hello-near-examples/](https://near-examples.github.io/hello-near-examples/)
+
+### Option 2: Manual Setup
+
 ```bash
 npm create vite@latest my-near-app -- --template react-ts
 cd my-near-app
