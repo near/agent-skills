@@ -1,15 +1,17 @@
-# Testing: Integration Tests
+# Testing: Integration Tests (near-sandbox + near-api)
 
-Use workspaces-rs for realistic integration testing with actual contract deployment.
+Use `near-sandbox` with `near-api` for realistic integration testing with actual contract deployment in a local sandbox environment.
 
 ## Why It Matters
 
 Integration tests validate:
+
 - Contract deployment and initialization
 - Cross-contract interactions
 - Real gas consumption
 - Actual blockchain behavior
 - End-to-end workflows
+- Time-sensitive operations (with fast forward)
 
 ## ❌ Incorrect
 
@@ -17,7 +19,7 @@ Integration tests validate:
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_transfer() {
         // Unit test only - doesn't test actual deployment
@@ -29,140 +31,188 @@ mod tests {
 ```
 
 **Problems:**
+
 - Doesn't test actual deployment
 - Can't verify cross-contract calls
 - No gas profiling
 - Misses blockchain-specific edge cases
 
-## ✅ Correct
+## ✅ Correct (near-sandbox + near-api)
 
 ```rust
-#[cfg(test)]
-mod tests {
-    use near_workspaces::{Account, Contract};
-    use serde_json::json;
+use near_api::{AccountId, NearGas, NearToken};
+use near_sdk::serde_json::json;
 
-    #[tokio::test]
-    async fn test_transfer_integration() -> Result<(), Box<dyn std::error::Error>> {
-        // Create sandbox environment
-        let worker = near_workspaces::sandbox().await?;
-        
-        // Deploy contract
-        let wasm = near_workspaces::compile_project("./").await?;
-        let contract = worker.dev_deploy(&wasm).await?;
-        
-        // Create test accounts
-        let owner = worker.dev_create_account().await?;
-        let user = worker.dev_create_account().await?;
-        
-        // Initialize contract
-        contract
-            .call("new")
-            .args_json(json!({
-                "owner_id": owner.id()
-            }))
-            .transact()
-            .await?
-            .into_result()?;
-        
-        // Test transfer with actual blockchain interaction
-        let result = user
-            .call(contract.id(), "transfer")
-            .args_json(json!({
-                "receiver_id": user.id(),
-                "amount": "100"
-            }))
-            .deposit(1)
-            .gas(300_000_000_000_000)
-            .transact()
-            .await?;
-        
-        // Verify result
-        assert!(result.is_success());
-        
-        // Check gas usage
-        println!("Gas burnt: {}", result.total_gas_burnt);
-        
-        // Verify state
-        let balance: String = contract
-            .view("get_balance")
-            .args_json(json!({
-                "account_id": user.id()
-            }))
-            .await?
-            .json()?;
-        
-        assert_eq!(balance, "100");
-        
-        Ok(())
-    }
-    
-    #[tokio::test]
-    async fn test_cross_contract_call() -> Result<(), Box<dyn std::error::Error>> {
-        let worker = near_workspaces::sandbox().await?;
-        
-        // Deploy multiple contracts
-        let contract_a = worker.dev_deploy(&wasm_a).await?;
-        let contract_b = worker.dev_deploy(&wasm_b).await?;
-        
-        // Test cross-contract interaction
-        let result = contract_a
-            .call("call_contract_b")
-            .args_json(json!({
-                "contract_b": contract_b.id()
-            }))
-            .gas(300_000_000_000_000)
-            .transact()
-            .await?;
-        
-        assert!(result.is_success());
-        
-        Ok(())
-    }
+// Helper function to create test accounts
+async fn create_subaccount(
+    sandbox: &near_sandbox::Sandbox,
+    name: &str,
+) -> testresult::TestResult<near_api::Account> {
+    let account_id: AccountId = name.parse().unwrap();
+    sandbox
+        .create_account(account_id.clone())
+        .initial_balance(NearToken::from_near(10))
+        .send()
+        .await?;
+    Ok(near_api::Account(account_id))
+}
+
+#[tokio::test]
+async fn test_contract_basics() -> testresult::TestResult<()> {
+    // Start local sandbox
+    let sandbox = near_sandbox::Sandbox::start_sandbox().await?;
+    let sandbox_network =
+        near_api::NetworkConfig::from_rpc_url("sandbox", sandbox.rpc_addr.parse()?);
+
+    // Create test accounts
+    let alice = create_subaccount(&sandbox, "alice.sandbox").await?;
+    let contract = create_subaccount(&sandbox, "contract.sandbox")
+        .await?
+        .as_contract();
+
+    // Setup signer (uses default genesis account)
+    let signer = near_api::Signer::from_secret_key(
+        near_sandbox::config::DEFAULT_GENESIS_ACCOUNT_PRIVATE_KEY
+            .parse()
+            .unwrap(),
+    )?;
+
+    // Compile contract
+    let contract_wasm_path = cargo_near_build::build_with_cli(Default::default())?;
+    let contract_wasm = std::fs::read(contract_wasm_path)?;
+
+    // Deploy and initialize contract
+    near_api::Contract::deploy(contract.account_id().clone())
+        .use_code(contract_wasm)
+        .with_init_call("new", json!({"owner_id": alice.account_id()}))?
+        .with_signer(signer.clone())
+        .send_to(&sandbox_network)
+        .await?
+        .assert_success();
+
+    // Call contract method with deposit
+    contract
+        .call_function("do_something", json!({"param": "value"}))
+        .transaction()
+        .deposit(NearToken::from_yoctonear(1))
+        .with_signer(alice.account_id().clone(), signer.clone())
+        .send_to(&sandbox_network)
+        .await?
+        .assert_success();
+
+    // View call (read-only)
+    let result: String = contract
+        .call_function("get_value", ())
+        .read_only()
+        .fetch_from(&sandbox_network)
+        .await?
+        .data;
+
+    assert_eq!(result, "expected_value");
+
+    Ok(())
 }
 ```
 
 **Benefits:**
+
 - Tests actual contract deployment
 - Validates cross-contract calls
 - Measures real gas consumption
-- Tests in sandbox environment
+- Tests in isolated sandbox environment
 - Catches integration issues
 
 ## Test Patterns
 
-### Setup Helper
+### Testing Failures
+
 ```rust
-async fn setup() -> Result<(Worker<Sandbox>, Contract, Account), Box<dyn std::error::Error>> {
-    let worker = near_workspaces::sandbox().await?;
-    let wasm = near_workspaces::compile_project("./").await?;
-    let contract = worker.dev_deploy(&wasm).await?;
-    let owner = worker.dev_create_account().await?;
-    Ok((worker, contract, owner))
+// Expect a call to fail
+contract
+    .call_function("invalid_method", ())
+    .transaction()
+    .with_signer(alice.account_id().clone(), signer.clone())
+    .send_to(&sandbox_network)
+    .await?
+    .assert_failure();
+```
+
+### Time Travel (fast forward blocks)
+
+```rust
+#[tokio::test]
+async fn test_time_sensitive() -> testresult::TestResult<()> {
+    let sandbox = near_sandbox::Sandbox::start_sandbox().await?;
+    // ... setup ...
+
+    // Fast forward 200 blocks
+    sandbox.fast_forward(200).await?;
+
+    // Now test time-dependent logic
+    contract
+        .call_function("claim", ())
+        .transaction()
+        .gas(NearGas::from_tgas(30))
+        .with_signer(user.account_id().clone(), signer.clone())
+        .send_to(&sandbox_network)
+        .await?
+        .assert_success();
+
+    Ok(())
 }
 ```
 
-### Testing Errors
+### Check Account Balance
+
 ```rust
-let result = user.call(contract.id(), "fail_method")
-    .transact()
-    .await?;
-assert!(result.is_failure());
-assert!(format!("{:?}", result).contains("Expected error message"));
+let balance = alice
+    .tokens()
+    .near_balance()
+    .fetch_from(&sandbox_network)
+    .await?
+    .total;
+
+assert!(balance > NearToken::from_millinear(9990));
+```
+
+### Specify Gas for Calls
+
+```rust
+contract
+    .call_function("expensive_operation", ())
+    .transaction()
+    .gas(NearGas::from_tgas(30))
+    .with_signer(alice.account_id().clone(), signer.clone())
+    .send_to(&sandbox_network)
+    .await?
+    .assert_success();
+```
+
+## Cargo.toml Setup
+
+```toml
+[dev-dependencies]
+near-sandbox = "0.3"
+near-api = "0.1"
+cargo-near-build = "0.2"
+tokio = { version = "1", features = ["full"] }
+testresult = "0.4"
 ```
 
 ## Additional Considerations
 
-- Add `near-workspaces` as a dev dependency in Cargo.toml: `near-workspaces = "0.10"`
-- Use `near_workspaces::sandbox()` for isolated testing
+- Use `near_sandbox::Sandbox::start_sandbox()` to create isolated local environment
+- Use `sandbox.fast_forward(blocks)` for time-sensitive tests
+- Use `near_api::Contract::deploy()` for deploying contracts
+- Use `.assert_success()` and `.assert_failure()` for result validation
+- Use `cargo_near_build::build_with_cli()` to compile contracts in tests
+- Create helper functions like `create_subaccount()` to reduce boilerplate
 - Test both success and failure cases
-- Verify gas consumption is reasonable
 - Test edge cases with max values
-- Use `.await?` for proper error propagation
-- Create helper functions to reduce boilerplate
-- Test contract upgrades if applicable
 
 ## References
 
-- [Testing with Workspaces](https://docs.near.org/sdk/rust/testing/integration-tests)
-- [Workspaces-rs GitHub](https://github.com/near/workspaces-rs)
+- [Integration Testing](https://docs.near.org/smart-contracts/testing/integration-test)
+- [near-sandbox GitHub](https://github.com/near/near-sandbox)
+- [near-api-rs GitHub](https://github.com/near/near-api-rs)
+- [NEAR Examples with Tests](https://github.com/near-examples)
