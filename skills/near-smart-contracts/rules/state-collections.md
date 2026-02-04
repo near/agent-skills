@@ -5,6 +5,7 @@ Use NEAR SDK collections from `near_sdk::store` for efficient on-chain storage i
 ## Why It Matters
 
 Standard Rust collections (HashMap, Vec, etc.) load entire data structures into memory, which:
+
 - Wastes gas on large datasets
 - Can exceed gas limits
 - Inefficiently uses storage
@@ -36,6 +37,7 @@ impl Contract {
 ```
 
 **Problems:**
+
 - Entire collection loaded into memory on every contract call
 - High gas costs for large datasets
 - Can hit gas limits with moderate data
@@ -86,6 +88,7 @@ impl Contract {
 ```
 
 **Benefits:**
+
 - Lazy loading - only accessed data is loaded
 - Lower gas costs for operations
 - Scales to large datasets
