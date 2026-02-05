@@ -20,26 +20,29 @@
 import type { AppProps } from "next/app";
 import { NearProvider } from "near-connect-hooks";
 
-const NETWORK = "testnet"; // or "mainnet"
-
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <NearProvider config={{ network: NETWORK }}>
+    <NearProvider
+      config={{
+        network: "testnet", // (optional, defaults to 'testnet')
+        rpcUrl: "https://test.rpc.fastnear.com", // (optional)
+      }}
+    >
       <Component {...pageProps} />
     </NearProvider>
   );
 }
 ```
 
-### With Custom RPC
+### With Custom RPC for Mainnet
 
 ```tsx
-<NearProvider config={{
-  network: "mainnet",
-  providers: {
-    mainnet: ["https://free.rpc.fastnear.com", "https://rpc.mainnet.near.org"]
-  }
-}}>
+<NearProvider
+  config={{
+    network: "mainnet",
+    rpcUrl: "https://free.rpc.fastnear.com",
+  }}
+>
   <App />
 </NearProvider>
 ```

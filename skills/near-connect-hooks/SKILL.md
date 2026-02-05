@@ -10,7 +10,11 @@ React hooks library for NEAR wallet integration built on `@hot-labs/near-connect
 ## Installation
 
 ```bash
-npm install near-connect-hooks @hot-labs/near-connect near-api-js
+npm install near-connect-hooks
+# or
+yarn add near-connect-hooks
+# or
+pnpm add near-connect-hooks
 ```
 
 ## Quick Start
@@ -22,7 +26,12 @@ import { NearProvider } from 'near-connect-hooks';
 
 function App() {
   return (
-    <NearProvider config={{ network: 'mainnet' }}>
+    <NearProvider
+      config={{
+        network: 'mainnet', // (optional, defaults to 'testnet')
+        rpcUrl: 'https://free.rpc.fastnear.com', // (optional, defaults to 'https://test.rpc.fastnear.com')
+      }}
+    >
       <YourApp />
     </NearProvider>
   );
@@ -106,8 +115,8 @@ await transfer({
 ```tsx
 const { getBalance, getAccessKeyList, signedAccountId } = useNearWallet();
 
-const balance = await getBalance(signedAccountId);  // bigint in yoctoNEAR
-const keys = await getAccessKeyList(signedAccountId);  // AccessKeyList
+const balance = await getBalance(signedAccountId);  // string in yoctoNEAR
+const keys = await getAccessKeyList(signedAccountId);  // AccessKeyList with block metadata
 ```
 
 ### NEP-413 Message Signing
@@ -179,13 +188,12 @@ Actions.deleteKey(publicKey)
 ## Provider Configuration
 
 ```tsx
-<NearProvider config={{
-  network: 'mainnet',  // 'testnet' | 'mainnet'
-  providers: {
-    mainnet: ['https://free.rpc.fastnear.com'],
-    testnet: ['https://test.rpc.fastnear.com']
-  }
-}}>
+<NearProvider
+  config={{
+    network: 'mainnet', // 'testnet' | 'mainnet' (defaults to 'testnet')
+    rpcUrl: 'https://free.rpc.fastnear.com', // (optional, defaults to 'https://test.rpc.fastnear.com')
+  }}
+>
 ```
 
 ## Reference Files
