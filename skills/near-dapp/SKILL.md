@@ -1,245 +1,89 @@
 ---
 name: near-dapp
-description: >-
-  Full-stack NEAR Protocol frontend development guide. Use when: (1) starting a new NEAR dApp, 
-  (2) choosing between near-kit vs near-api-js, (3) setting up wallet integration, 
-  (4) building React/Next.js apps with NEAR, (5) implementing token transfers, 
-  (6) displaying account balances/NFTs, (7) connecting to smart contracts from frontend.
-  This skill orchestrates other NEAR skills (near-connect, near-kit, near-api-js, near-intents) 
-  to provide the complete developer journey.
+description: Build NEAR Protocol dApps. Use for: (1) creating new NEAR dApps with `create-near-app` (Vite+React, Next.js), (2) adding NEAR wallet connection to existing apps with `@hot-labs/near-connect` and `near-connect-hooks`, (3) building frontend UI for NEAR smart contracts, (4) integrating wallet sign-in/sign-out, contract calls, and transaction signing into web applications.
 ---
 
-# NEAR dApp Development
+# NEAR dApp
 
-Frontend development guide for NEAR Protocol applications.
+## Decision Router
 
-## Quick Start - Choose Your Path
+Determine which path to follow:
 
-| Building | Use | When |
-|----------|-----|------|
-| **React App** | `near-connect-hooks` | Modern React apps with hooks |
-| **TypeScript Backend** | `near-kit` or `near-api-js` | Node.js scripts, bots, servers |
-| **Cross-chain Swaps** | `near-intents` | Swap widgets, bridge interfaces |
+### Path A: New Project
 
-## Project Setup
+User wants to create a new NEAR dApp from scratch.
 
-### Vite + React (Recommended)
+1. Read [references/create-near-app.md](references/create-near-app.md)
+2. Run scaffolding:
 
 ```bash
-npm create vite@latest my-near-app -- --template react-ts
-cd my-near-app
-npm install near-connect-hooks @hot-labs/near-connect near-api-js @tanstack/react-query
+npx create-near-app@latest
 ```
 
-### Next.js
+Or with arguments:
 
 ```bash
-npx create-next-app@latest my-near-app --typescript
-cd my-near-app
-npm install near-connect-hooks @hot-labs/near-connect near-api-js @tanstack/react-query
+npx create-near-app my-app --frontend vite-react --contract rs --install
 ```
 
-## Wallet Integration (React)
+**Framework options:** `vite-react` | `next-app` | `next-page`
+**Contract options:** `rs` (Rust) | `ts` (TypeScript)
 
-### 1. Add Providers
+3. If user needs wallet connection in the scaffolded app, also follow Path B.
+
+### Path B: Existing Project
+
+User wants to add NEAR wallet connection to an existing React app.
+
+1. Read [references/near-connect-hooks.md](references/near-connect-hooks.md) — React hooks API and patterns
+2. If user needs low-level wallet API or non-React integration, also read [references/near-connect.md](references/near-connect.md)
+
+**Quick setup:**
+
+```bash
+npm install near-connect-hooks @hot-labs/near-connect near-api-js
+```
 
 ```tsx
-// App.tsx
-import { NearProvider } from 'near-connect-hooks'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+// 1. Wrap app root with NearProvider
+import { NearProvider } from 'near-connect-hooks';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: { staleTime: 30_000, retry: 2 }
-  }
-})
+<NearProvider config={{ network: 'mainnet' }}>
+  <App />
+</NearProvider>
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <NearProvider config={{ network: 'mainnet' }}>
-        <YourApp />
-      </NearProvider>
-    </QueryClientProvider>
-  )
-}
+// 2. Use hook in components
+import { useNearWallet } from 'near-connect-hooks';
+
+const { signedAccountId, signIn, signOut, viewFunction, callFunction } = useNearWallet();
 ```
 
-### 2. Connect Button
+### Path C: Non-React or Vanilla JS
 
-```tsx
-import { useNearWallet } from 'near-connect-hooks'
+Use `@hot-labs/near-connect` directly without React hooks.
 
-function ConnectButton() {
-  const { signedAccountId, loading, signIn, signOut } = useNearWallet()
-  
-  if (loading) return <div>Loading...</div>
-  if (!signedAccountId) return <button onClick={signIn}>Connect Wallet</button>
-  return <button onClick={signOut}>Disconnect {signedAccountId}</button>
-}
+1. Read [references/near-connect.md](references/near-connect.md)
+
+```bash
+npm install @hot-labs/near-connect
 ```
 
-**For advanced wallet integration**: See `near-connect` skill
+```typescript
+import { NearConnector } from "@hot-labs/near-connect";
 
-## Contract Interaction
-
-### View Functions (Read-Only, Free)
-
-```tsx
-import { useQuery } from '@tanstack/react-query'
-import { useNearWallet } from 'near-connect-hooks'
-
-function useBalance(accountId: string) {
-  const { viewFunction } = useNearWallet()
-  
-  return useQuery<string>({
-    queryKey: ['balance', accountId],
-    queryFn: () => viewFunction({
-      contractId: 'token.near',
-      method: 'ft_balance_of',
-      args: { account_id: accountId }
-    }),
-    enabled: !!accountId
-  })
-}
+const connector = new NearConnector({ network: "mainnet" });
+connector.on("wallet:signIn", async (t) => {
+  const wallet = await connector.wallet();
+  const address = t.accounts[0].accountId;
+});
+await connector.connect();
 ```
 
-### Call Functions (State Changes)
+## Key Patterns
 
-```tsx
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-
-function useTransferToken(contractId: string) {
-  const { callFunction } = useNearWallet()
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: (args: { receiverId: string; amount: string }) => 
-      callFunction({
-        contractId,
-        method: 'ft_transfer',
-        args: { receiver_id: args.receiverId, amount: args.amount },
-        deposit: '1'
-      }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['balance'] })
-  })
-}
-```
-
-### Send NEAR
-
-```tsx
-function useSendNear() {
-  const { transfer } = useNearWallet()
-  
-  return useMutation({
-    mutationFn: (params: { receiverId: string; amount: string }) =>
-      transfer({
-        receiverId: params.receiverId,
-        amount: params.amount
-      })
-  })
-}
-```
-
-## Common Patterns
-
-### Display Account Balance
-
-```tsx
-function Balance() {
-  const { signedAccountId, getBalance } = useNearWallet()
-  
-  const { data: balance, isLoading } = useQuery<bigint>({
-    queryKey: ['near-balance', signedAccountId],
-    queryFn: () => getBalance(signedAccountId!),
-    enabled: !!signedAccountId,
-    select: (b) => b
-  })
-  
-  if (isLoading) return <Skeleton />
-  return <span>{(Number(balance) / 1e24).toFixed(2)} NEAR</span>
-}
-```
-
-### FT Balance with Formatting
-
-```tsx
-interface TokenConfig {
-  contractId: string
-  decimals: number
-  symbol: string
-}
-
-function useFormattedBalance(token: TokenConfig) {
-  const { signedAccountId, viewFunction } = useNearWallet()
-  
-  return useQuery({
-    queryKey: ['ft-balance', token.contractId, signedAccountId],
-    queryFn: async () => {
-      const raw = await viewFunction({
-        contractId: token.contractId,
-        method: 'ft_balance_of',
-        args: { account_id: signedAccountId }
-      })
-      const formatted = (Number(raw) / Math.pow(10, token.decimals)).toFixed(2)
-      return `${formatted} ${token.symbol}`
-    },
-    enabled: !!signedAccountId
-  })
-}
-```
-
-### Loading State Pattern
-
-```tsx
-interface TransactionButtonProps {
-  contractId: string
-  method: string
-  args: Record<string, unknown>
-  label: string
-}
-
-function TransactionButton({ contractId, method, args, label }: TransactionButtonProps) {
-  const { callFunction } = useNearWallet()
-  
-  const { mutate, isPending, error } = useMutation({
-    mutationFn: () => callFunction({ contractId, method, args })
-  })
-  
-  return (
-    <>
-      <button onClick={() => mutate()} disabled={isPending}>
-        {isPending ? 'Processing...' : label}
-      </button>
-      {error && <ErrorMessage error={error} />}
-    </>
-  )
-}
-```
-
-## Skill Router
-
-Use the appropriate skill based on your needs:
-
-| Need | Skill |
-|------|-------|
-| React hooks for wallet/contracts | `near-connect-hooks` |
-| Wallet selector UI customization | `near-connect` |
-| Low-level transaction building | `near-api-js` |
-| TypeScript library with cleaner API | `near-kit` |
-| Cross-chain token swaps | `near-intents` |
-| Smart contract development | `near-smart-contracts` |
-
-## RPC Endpoints
-
-| Network | URL |
-|---------|-----|
-| Mainnet | `https://free.rpc.fastnear.com` |
-| Testnet | `https://test.rpc.fastnear.com` |
-
-## References
-
-- [Project Templates](references/project-templates.md) - Complete setup guides
-- [Common Patterns](references/common-patterns.md) - Auth, errors, NFTs, transactions
-- [Skill Router](references/skill-router.md) - When to use which skill
+- **Read contract state** (no wallet): `viewFunction({ contractId, method, args })`
+- **Write to contract** (wallet required): `callFunction({ contractId, method, args, deposit })`
+- **Transfer NEAR**: `transfer({ receiverId, amount })`
+- **NEAR ↔ yoctoNEAR**: Use `nearToYocto()` / `yoctoToNear()` from `near-api-js`
+- **1 NEAR** = `"1000000000000000000000000"` yoctoNEAR
+- **Default gas**: `"30000000000000"` (30 TGas)

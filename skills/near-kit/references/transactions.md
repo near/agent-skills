@@ -252,6 +252,54 @@ const result = await relayerNear
 
 ---
 
+## Global Contracts
+
+Actions for the global contract registry. See [global-contracts.md](global-contracts.md) for details.
+
+### Publish Contract
+
+```typescript
+// Updatable (identified by account)
+await near
+  .transaction("factory.near")
+  .publishContract(wasm)
+  .send()
+
+// Immutable (identified by hash)
+await near
+  .transaction("factory.near")
+  .publishContract(wasm, { identifiedBy: "hash" })
+  .send()
+```
+
+### Deploy from Published
+
+```typescript
+// From account (updatable)
+.deployFromPublished({ accountId: "factory.near" })
+
+// From hash (immutable)
+.deployFromPublished({ codeHash: "5FzD8..." })
+```
+
+### State Init (NEP-616)
+
+Deploy to deterministic address:
+
+```typescript
+const encoder = new TextEncoder();
+
+.stateInit({
+  code: { accountId: "publisher.near" },
+  data: new Map([
+    [encoder.encode("owner"), encoder.encode("alice.near")]
+  ]),
+  deposit: "1 NEAR",
+})
+```
+
+---
+
 ## Advanced Patterns
 
 ### Building Without Sending

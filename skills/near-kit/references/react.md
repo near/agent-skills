@@ -1,80 +1,107 @@
-# React Bindings (@near-kit/react)
+# @near-kit/react
 
-React hooks and providers for near-kit.
-
-## Table of Contents
-- [Installation](#installation)
-- [Provider & Context](#provider--context)
-- [View Hooks](#view-hooks)
-- [Mutation Hooks](#mutation-hooks)
-- [Account & Contract Hooks](#account--contract-hooks)
-- [React Query Integration](#react-query-integration)
-- [SWR Integration](#swr-integration)
-- [Wallet Integration](#wallet-integration)
-- [SSR / Next.js](#ssr--nextjs)
-
----
+React bindings for [near-kit](https://github.com/r-near/near-kit) — a simple, intuitive TypeScript library for interacting with NEAR Protocol.
 
 ## Installation
 
 ```bash
 npm install @near-kit/react
+# or
+bun add @near-kit/react
 ```
 
----
-
-## Provider & Context
-
-### NearProvider
-
-Wrap your app to provide a Near client to all components:
+## Quick Start
 
 ```tsx
-import { NearProvider } from "@near-kit/react"
+import { NearProvider, useNear, useView, useCall } from "@near-kit/react"
 
-// With configuration
+function App() {
+  return (
+    <NearProvider config={{ network: "testnet" }}>
+      <Counter />
+    </NearProvider>
+  )
+}
+
+function Counter() {
+  const { data: count, isLoading } = useView<{}, number>({
+    contractId: "counter.testnet",
+    method: "get_count",
+  })
+
+  const { mutate: increment, isPending } = useCall({
+    contractId: "counter.testnet",
+    method: "increment",
+  })
+
+  if (isLoading) return <div>Loading...</div>
+
+  return (
+    <button onClick={() => increment({})} disabled={isPending}>
+      Count: {count}
+    </button>
+  )
+}
+```
+
+## Philosophy
+
+This package provides **thin, ergonomic wrappers** around `near-kit`. The hooks handle basic React state (loading, error, data) without reimplementing caching, deduplication, or advanced features.
+
+**For simple apps:** Use the built-in hooks directly.
+
+**For advanced use cases:** Use `useNear()` with [React Query](#react-query-integration) or [SWR](#swr-integration) for caching, polling, optimistic updates, and more.
+
+## API Reference
+
+### Provider & Context
+
+#### `<NearProvider>`
+
+Provides a `Near` client to all child components.
+
+```tsx
+// Option 1: Pass configuration (creates Near instance internally)
 <NearProvider config={{ network: "testnet" }}>
   <App />
 </NearProvider>
 
-// With existing Near instance
+// Option 2: Pass an existing Near instance
 const near = new Near({ network: "testnet", privateKey: "..." })
 <NearProvider near={near}>
   <App />
 </NearProvider>
 ```
 
-### useNear
+#### `useNear()`
 
-Access the Near client for direct API calls or library integration:
+Returns the `Near` client from context. Use this for direct access or integration with React Query/SWR.
 
 ```tsx
 function MyComponent() {
   const near = useNear()
-  // near.view(), near.call(), near.send(), near.transaction()
+  // near.view(), near.call(), near.send(), near.transaction(), etc.
 }
 ```
 
----
+### View Hooks
 
-## View Hooks
+#### `useView<TArgs, TResult>(params)`
 
-### useView
-
-Call view methods on contracts:
+Calls a view method on a contract.
 
 ```tsx
 const { data, isLoading, error, refetch } = useView<{ account_id: string }, string>({
   contractId: "token.testnet",
   method: "ft_balance_of",
   args: { account_id: "alice.testnet" },
-  enabled: true, // optional
+  enabled: true, // optional, default: true
 })
 ```
 
-### useBalance
+#### `useBalance(params)`
 
-Fetch account NEAR balance:
+Fetches an account's NEAR balance.
 
 ```tsx
 const { data: balance, isLoading } = useBalance({
@@ -82,9 +109,9 @@ const { data: balance, isLoading } = useBalance({
 })
 ```
 
-### useAccountExists
+#### `useAccountExists(params)`
 
-Check if account exists:
+Checks if an account exists.
 
 ```tsx
 const { data: exists } = useAccountExists({
@@ -92,16 +119,14 @@ const { data: exists } = useAccountExists({
 })
 ```
 
----
+### Mutation Hooks
 
-## Mutation Hooks
+#### `useCall<TArgs, TResult>(params)`
 
-### useCall
-
-Call change methods on contracts:
+Calls a change method on a contract.
 
 ```tsx
-const { mutate, isPending, isSuccess, isError, error, reset } = useCall<
+const { mutate, data, isPending, isSuccess, isError, error, reset } = useCall<
   { amount: number },
   void
 >({
@@ -110,35 +135,38 @@ const { mutate, isPending, isSuccess, isError, error, reset } = useCall<
   options: { gas: "30 Tgas" }, // optional defaults
 })
 
+// Execute the call
 await mutate({ amount: 1 })
-await mutate({ amount: 1 }, { attachedDeposit: "0.1 NEAR" }) // override
+
+// Override options per-call
+await mutate({ amount: 1 }, { attachedDeposit: "0.1 NEAR" })
 ```
 
-### useSend
+#### `useSend()`
 
-Send NEAR tokens:
+Sends NEAR tokens.
 
 ```tsx
-const { mutate: send, isPending } = useSend()
+const { mutate: send, isPending, isSuccess, isError, error, reset } = useSend()
 
 await send("bob.testnet", "1 NEAR")
 ```
 
----
+### Account Hook
 
-## Account & Contract Hooks
+#### `useAccount()`
 
-### useAccount
-
-Get current connected account state:
+Returns the current connected account state.
 
 ```tsx
 const { accountId, isConnected, isLoading, refetch } = useAccount()
 ```
 
-### useContract
+### Typed Contract Hook
 
-Get typed contract instance with full TypeScript inference:
+#### `useContract<T>(contractId)`
+
+Returns a typed contract instance for full TypeScript inference.
 
 ```tsx
 import type { Contract } from "near-kit"
@@ -154,15 +182,15 @@ type MyContract = Contract<{
 
 function TokenBalance() {
   const contract = useContract<MyContract>("token.testnet")
+
+  // Fully typed!
   const balance = await contract.view.get_balance({ account_id: "..." })
 }
 ```
 
----
-
 ## React Query Integration
 
-For caching, polling, background refetching, use React Query with `useNear()`:
+For caching, polling, background refetching, and devtools, use React Query with `useNear()`:
 
 ```tsx
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -174,6 +202,7 @@ function useContractView<TArgs extends object, TResult>(
   args: TArgs
 ) {
   const near = useNear()
+
   return useQuery({
     queryKey: ["near", "view", contractId, method, args],
     queryFn: () => near.view<TResult>(contractId, method, args),
@@ -186,12 +215,34 @@ function useContractCall<TArgs extends object, TResult>(
 ) {
   const near = useNear()
   const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: (args: TArgs) => near.call<TResult>(contractId, method, args),
     onSuccess: () => {
+      // Invalidate relevant queries after mutation
       queryClient.invalidateQueries({ queryKey: ["near", "view", contractId] })
     },
   })
+}
+
+// Usage
+function Counter() {
+  const { data: count, isLoading } = useContractView<{}, number>(
+    "counter.testnet",
+    "get_count",
+    {}
+  )
+
+  const { mutate: increment } = useContractCall<{}, void>(
+    "counter.testnet",
+    "increment"
+  )
+
+  return (
+    <button onClick={() => increment({})}>
+      Count: {isLoading ? "..." : count}
+    </button>
+  )
 }
 ```
 
@@ -201,15 +252,13 @@ function useContractCall<TArgs extends object, TResult>(
 const { data: balance } = useQuery({
   queryKey: ["near", "balance", accountId],
   queryFn: () => near.getBalance(accountId),
-  refetchInterval: 5000,
+  refetchInterval: 5000, // Poll every 5 seconds
 })
 ```
 
----
-
 ## SWR Integration
 
-Lighter alternative using SWR:
+For a lighter alternative, use SWR with `useNear()`:
 
 ```tsx
 import useSWR from "swr"
@@ -222,10 +271,9 @@ function useContractView<TArgs extends object, TResult>(
   args: TArgs
 ) {
   const near = useNear()
-  return useSWR(
-    ["near", "view", contractId, method, JSON.stringify(args)],
-    () => near.view<TResult>(contractId, method, args)
-  )
+  const key = ["near", "view", contractId, method, JSON.stringify(args)]
+
+  return useSWR(key, () => near.view<TResult>(contractId, method, args))
 }
 
 function useContractCall<TArgs extends object, TResult>(
@@ -233,15 +281,43 @@ function useContractCall<TArgs extends object, TResult>(
   method: string
 ) {
   const near = useNear()
-  return useSWRMutation(
-    ["near", "call", contractId, method],
-    (_key, { arg }: { arg: TArgs }) =>
-      near.call<TResult>(contractId, method, arg)
+  const key = ["near", "call", contractId, method]
+
+  return useSWRMutation(key, (_key, { arg }: { arg: TArgs }) =>
+    near.call<TResult>(contractId, method, arg)
+  )
+}
+
+// Usage
+function Counter() {
+  const { data: count, isLoading } = useContractView<{}, number>(
+    "counter.testnet",
+    "get_count",
+    {}
+  )
+
+  const { trigger: increment, isMutating } = useContractCall<{}, void>(
+    "counter.testnet",
+    "increment"
+  )
+
+  return (
+    <button onClick={() => increment({})} disabled={isMutating}>
+      Count: {isLoading ? "..." : count}
+    </button>
   )
 }
 ```
 
----
+### With Polling
+
+```tsx
+const { data: balance } = useSWR(
+  ["near", "balance", accountId],
+  () => near.getBalance(accountId),
+  { refreshInterval: 5000 }
+)
+```
 
 ## Wallet Integration
 
@@ -253,7 +329,7 @@ import { fromWalletSelector } from "near-kit"
 
 const selector = await setupWalletSelector({
   network: "testnet",
-  modules: [/* wallet modules */],
+  modules: [/* your wallet modules */],
 })
 const wallet = await selector.wallet()
 
@@ -285,11 +361,9 @@ const connect = await setupNearConnect({ network: "testnet" })
 </NearProvider>
 ```
 
----
-
 ## SSR / Next.js
 
-Package is marked with `"use client"`. Wrap provider in client component:
+This package is marked with `"use client"` and is designed for client-side use only. In Next.js App Router, wrap the provider in a client component:
 
 ```tsx
 // app/providers.tsx
@@ -305,3 +379,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   )
 }
 ```
+
+## License
+
+MIT

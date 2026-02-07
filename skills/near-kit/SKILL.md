@@ -7,6 +7,11 @@ description: TypeScript library for NEAR Protocol blockchain interaction. Use th
 
 A TypeScript library for NEAR Protocol with an intuitive, fetch-like API.
 
+> **IMPORTANT:** `near-kit` is NOT `near-api-js`. They are completely different libraries.
+> - Do NOT use `near-api-js` patterns (`utils.format`, `account.functionCall`, `BN`)
+> - Use human-readable strings: `"10 NEAR"`, `"30 Tgas"`
+> - Use the fluent transaction builder: `near.transaction().transfer().send()`
+
 ## Quick Start
 
 ```typescript
@@ -192,24 +197,41 @@ await sandbox.stop()
 
 ## Error Handling
 
+All errors extend `NearError`. Use `instanceof` for specific handling:
+
 ```typescript
-import {
-  InsufficientBalanceError,
-  FunctionCallError,
-  NetworkError,
-  TimeoutError,
-} from "near-kit"
+import { FunctionCallError, InsufficientBalanceError, NetworkError } from "near-kit"
 
 try {
   await near.call("contract.near", "method", {})
 } catch (error) {
-  if (error instanceof InsufficientBalanceError) {
-    console.log(`Need ${error.required}, have ${error.available}`)
-  } else if (error instanceof FunctionCallError) {
+  if (error instanceof FunctionCallError) {
     console.log(`Panic: ${error.panic}`, `Logs: ${error.logs}`)
+  } else if (error instanceof InsufficientBalanceError) {
+    console.log(`Need ${error.required}, have ${error.available}`)
   }
 }
 ```
+
+**For all error types and handling patterns, see [references/errors.md](references/errors.md)**
+
+## Global Contracts
+
+Publish code once, deploy by reference (NEP-616):
+
+```typescript
+// Publish to global registry
+await near.transaction("factory.near").publishContract(wasm).send()
+
+// Deploy by reference (cheap!)
+await near
+  .transaction("user.near")
+  .createAccount("dao.user.near")
+  .deployFromPublished({ accountId: "factory.near" })
+  .send()
+```
+
+**For global contracts and deterministic addresses, see [references/global-contracts.md](references/global-contracts.md)**
 
 ## Unit Formatting
 
@@ -252,3 +274,5 @@ For detailed documentation on specific topics:
 - **[Wallet Integration](references/wallets.md)** - HOT Connect, Wallet Selector, universal patterns
 - **[Transaction Builder](references/transactions.md)** - All actions, meta-transactions (NEP-366)
 - **[Keys and Testing](references/keys-and-testing.md)** - Key stores, utilities, sandbox, NEP-413 signing
+- **[Error Handling](references/errors.md)** - Error types, panic messages, recovery patterns
+- **[Global Contracts](references/global-contracts.md)** - NEP-616, publish/deploy by reference
