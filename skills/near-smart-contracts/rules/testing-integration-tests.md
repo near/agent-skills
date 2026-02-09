@@ -40,10 +40,9 @@ mod tests {
 ## ✅ Correct (near-sandbox + near-api)
 
 ```rust
-use near_api::{AccountId, NearGas, NearToken};
+use near_api::{AccountId, NearToken};
 use near_sdk::serde_json::json;
 
-// Helper function to create test accounts
 async fn create_subaccount(
     sandbox: &near_sandbox::Sandbox,
     name: &str,
