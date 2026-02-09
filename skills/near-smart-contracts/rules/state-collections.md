@@ -49,6 +49,24 @@ impl Contract {
 use near_sdk::{near, env, AccountId, PanicOnDefault};
 use near_sdk::store::{IterableMap, Vector, LookupMap};
 
+#[near(serializers = [json, borsh])]
+#[derive(Clone)]
+pub struct User {
+    pub name: String,
+}
+
+#[near(serializers = [json, borsh])]
+#[derive(Clone)]
+pub struct Item {
+    pub title: String,
+}
+
+#[near(serializers = [json, borsh])]
+#[derive(Clone)]
+pub struct UserMetadata {
+    pub role: String,
+}
+
 #[near(contract_state)]
 #[derive(PanicOnDefault)]
 pub struct Contract {

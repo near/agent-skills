@@ -90,25 +90,30 @@ async fn test_contract_basics() -> testresult::TestResult<()> {
         .await?
         .assert_success();
 
-    // Call contract method with deposit
+    // Call a contract method (as alice, the owner)
     contract
-        .call_function("do_something", json!({"param": "value"}))
+        .call_function("set_data", json!({
+            "key": alice.account_id(),
+            "value": "hello world"
+        }))
         .transaction()
-        .deposit(NearToken::from_yoctonear(1))
         .with_signer(alice.account_id().clone(), signer.clone())
         .send_to(&sandbox_network)
         .await?
         .assert_success();
 
-    // View call (read-only)
-    let result: String = contract
-        .call_function("get_value", ())
-        .read_only()
+    // Check alice's balance after interaction
+    let balance = alice
+        .tokens()
+        .near_balance()
         .fetch_from(&sandbox_network)
         .await?
-        .data;
+        .total;
 
-    assert_eq!(result, "expected_value");
+    assert!(
+        balance > NearToken::from_near(0),
+        "Alice should have a positive balance"
+    );
 
     Ok(())
 }

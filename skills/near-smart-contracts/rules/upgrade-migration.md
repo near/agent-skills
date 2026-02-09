@@ -33,6 +33,7 @@ pub struct Contract {
 ```
 
 **Problems:**
+
 - Contract becomes unusable after upgrade
 - State cannot be read with new structure
 - No way to recover without migration method
@@ -41,11 +42,10 @@ pub struct Contract {
 ## ✅ Correct
 
 ```rust
-use near_sdk::{near, env, AccountId, PanicOnDefault, Promise, Gas};
-use near_sdk::borsh::{BorshDeserialize, BorshSerialize};
+use near_sdk::{near, env, require, AccountId, PanicOnDefault, Promise, Gas};
 
 // Define old state for migration
-#[derive(BorshDeserialize)]
+#[near(serializers = [borsh])]
 pub struct OldContract {
     owner: AccountId,
     data: Vec<String>,
@@ -105,6 +105,7 @@ impl Contract {
 ```
 
 **Benefits:**
+
 - Smooth state transition
 - No data loss
 - Controlled upgrade process
@@ -115,7 +116,7 @@ impl Contract {
 Use enums to simplify future migrations:
 
 ```rust
-use near_sdk::{near, env, AccountId};
+use near_sdk::{near, env};
 
 #[near(serializers = [borsh])]
 pub enum VersionedData {
@@ -143,6 +144,39 @@ impl VersionedData {
             }),
             v2 => v2,  // Already latest version
         }
+    }
+}
+
+#[near(contract_state)]
+pub struct Contract {
+    data: VersionedData,
+}
+
+impl Default for Contract {
+    fn default() -> Self {
+        Self {
+            data: VersionedData::V2(DataV2 {
+                value: String::new(),
+                timestamp: 0,
+            }),
+        }
+    }
+}
+
+#[near]
+impl Contract {
+    pub fn get_value(&self) -> &str {
+        match &self.data {
+            VersionedData::V1(v1) => &v1.value,
+            VersionedData::V2(v2) => &v2.value,
+        }
+    }
+
+    pub fn set_value(&mut self, value: String) {
+        self.data = VersionedData::V2(DataV2 {
+            value,
+            timestamp: env::block_timestamp(),
+        });
     }
 }
 ```

@@ -5,6 +5,7 @@ Always validate storage operations to prevent unauthorized access, data corrupti
 ## Why It Matters
 
 NEAR smart contracts store data on-chain with associated storage costs (~1 NEAR per 100kb). Improper storage management can lead to:
+
 - Unauthorized data access or modification
 - Storage staking attacks (attackers filling your storage)
 - Gas inefficiency
@@ -24,6 +25,7 @@ impl Contract {
 ```
 
 **Problems:**
+
 - No access control validation
 - No storage deposit checks
 - Allows unauthorized modifications
@@ -32,10 +34,24 @@ impl Contract {
 ## ✅ Correct
 
 ```rust
-use near_sdk::{near, env, require, AccountId, NearToken};
+use near_sdk::{near, env, require, AccountId, NearToken, PanicOnDefault, Promise};
+use near_sdk::store::LookupMap;
+
+#[near(contract_state)]
+#[derive(PanicOnDefault)]
+pub struct Contract {
+    user_data: LookupMap<AccountId, String>,
+}
 
 #[near]
 impl Contract {
+    #[init]
+    pub fn new() -> Self {
+        Self {
+            user_data: LookupMap::new(b"u"),
+        }
+    }
+
     #[payable]
     pub fn update_user_data(&mut self, user_id: AccountId, data: String) {
         // Verify caller is authorized
@@ -63,13 +79,14 @@ impl Contract {
         // Refund excess deposit
         let refund = env::attached_deposit().saturating_sub(storage_cost);
         if refund > NearToken::from_yoctonear(0) {
-            Promise::new(env::predecessor_account_id()).transfer(refund);
+            Promise::new(env::predecessor_account_id()).transfer(refund).detach();
         }
     }
 }
 ```
 
 **Benefits:**
+
 - Validates caller authorization with `require!`
 - Ensures proper storage payment
 - Prevents unauthorized access
