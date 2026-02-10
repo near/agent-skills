@@ -1,5 +1,5 @@
 ---
-name: near-cloud
+name: near-ai-cloud
 description: NEAR AI Cloud private inference and verification. Use when integrating NEAR AI Cloud API for verifiable private AI inference, verifying model or gateway TEE attestation (NVIDIA NRAS, Intel TDX), verifying chat message signatures, implementing end-to-end encrypted chat, or using the OpenAI-compatible API with NEAR AI Cloud.
 metadata:
   author: near
