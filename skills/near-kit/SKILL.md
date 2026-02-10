@@ -10,20 +10,42 @@ A TypeScript library for NEAR Protocol with an intuitive, fetch-like API.
 ## Quick Start
 
 ```typescript
-import { Near } from "near-kit"
+import { Near } from "near-kit";
 
 // Read-only (no key needed)
-const near = new Near({ network: "testnet" })
-const data = await near.view("contract.near", "get_data", { key: "value" })
+const near = new Near({ network: "testnet" });
+const data = await near.view("contract.near", "get_data", { key: "value" });
 
 // With signing capability
 const near = new Near({
   network: "testnet",
   privateKey: "ed25519:...",
   defaultSignerId: "alice.testnet",
-})
-await near.call("contract.near", "method", { arg: "value" })
-await near.send("bob.testnet", "1 NEAR")
+});
+await near.call("contract.near", "method", { arg: "value" });
+await near.send("bob.testnet", "1 NEAR");
+```
+
+## Import Cheatsheet
+
+```typescript
+// Core
+import { Near } from "near-kit";
+
+// Keys
+import { generateKey, parseSeedPhrase, generateSeedPhrase } from "near-kit";
+import { RotatingKeyStore, InMemoryKeyStore } from "near-kit";
+import { FileKeyStore } from "near-kit/keys/file";
+import { NativeKeyStore } from "near-kit/keys/native";
+
+// Wallet adapters
+import { fromHotConnect, fromWalletSelector } from "near-kit";
+
+// NEP-413 verification
+import { verifyNep413Signature } from "near-kit";
+
+// Utilities
+import { Amount, Gas, isValidAccountId } from "near-kit";
 ```
 
 ## Core Operations
@@ -31,9 +53,9 @@ await near.send("bob.testnet", "1 NEAR")
 ### View Methods (Read-Only, Free)
 
 ```typescript
-const result = await near.view("contract.near", "get_data", { key: "value" })
-const balance = await near.getBalance("alice.near")
-const exists = await near.accountExists("alice.near")
+const result = await near.view("contract.near", "get_data", { key: "value" });
+const balance = await near.getBalance("alice.near");
+const exists = await near.accountExists("alice.near");
 ```
 
 ### Call Methods (Requires Signing)
@@ -43,33 +65,52 @@ await near.call(
   "contract.near",
   "method",
   { arg: "value" },
-  { gas: "30 Tgas", attachedDeposit: "1 NEAR" }
-)
+  { gas: "30 Tgas", attachedDeposit: "1 NEAR" },
+);
 ```
 
 ### Send NEAR Tokens
 
 ```typescript
-await near.send("bob.near", "5 NEAR")
+await near.send("bob.near", "5 NEAR");
 ```
 
 ## Type-Safe Contracts
 
 ```typescript
-import type { Contract } from "near-kit"
+import type { Contract } from "near-kit";
 
 type MyContract = Contract<{
   view: {
-    get_balance: (args: { account_id: string }) => Promise<string>
-  }
+    get_balance: (args: { account_id: string }) => Promise<string>;
+  };
   call: {
-    transfer: (args: { to: string; amount: string }) => Promise<void>
-  }
-}>
+    transfer: (args: { to: string; amount: string }) => Promise<void>;
+  };
+}>;
 
-const contract = near.contract<MyContract>("token.near")
-await contract.view.get_balance({ account_id: "alice.near" })
-await contract.call.transfer({ to: "bob.near", amount: "10" }, { attachedDeposit: "1 yocto" })
+const contract = near.contract<MyContract>("token.near");
+
+// View (no options needed)
+await contract.view.get_balance({ account_id: "alice.near" });
+
+// Call (options as second arg)
+await contract.call.transfer(
+  { to: "bob.near", amount: "10" },
+  { attachedDeposit: "1 yocto" },
+);
+```
+
+Untyped contract proxy:
+
+```typescript
+const guestbook = near.contract("guestbook.near-examples.testnet");
+
+const total = await guestbook.view.total_messages();
+const result = await guestbook.call.add_message(
+  { text: "Hello!" },
+  { gas: "30 Tgas" },
+);
 ```
 
 ## Transaction Builder
@@ -77,11 +118,11 @@ await contract.call.transfer({ to: "bob.near", amount: "10" }, { attachedDeposit
 Chain multiple actions in a single atomic transaction:
 
 ```typescript
-await near
+const result = await near
   .transaction("alice.near")
-  .transfer("bob.near", "1 NEAR")
-  .functionCall("contract.near", "method", { arg: "value" }, { gas: "30 Tgas" })
-  .send()
+  .functionCall("counter.near", "increment", {}, { gas: "30 Tgas" })
+  .transfer("counter.near", "0.001 NEAR")
+  .send();
 ```
 
 **For all transaction actions and meta-transactions, see [references/transactions.md](references/transactions.md)**
@@ -96,23 +137,23 @@ const near = new Near({
   network: "testnet",
   privateKey: "ed25519:...",
   defaultSignerId: "alice.testnet",
-})
+});
 
 // File-based keystore
-import { FileKeyStore } from "near-kit/keys/file"
+import { FileKeyStore } from "near-kit/keys/file";
 const near = new Near({
   network: "testnet",
-  keyStore: new FileKeyStore("~/.near-credentials"),
-})
+  keyStore: new FileKeyStore("~/.near-credentials", "testnet"),
+});
 
 // High-throughput with rotating keys
-import { RotatingKeyStore } from "near-kit"
+import { RotatingKeyStore } from "near-kit";
 const near = new Near({
   network: "mainnet",
   keyStore: new RotatingKeyStore({
     "bot.near": ["ed25519:key1...", "ed25519:key2...", "ed25519:key3..."],
   }),
-})
+});
 ```
 
 **For all key stores and utilities, see [references/keys-and-testing.md](references/keys-and-testing.md)**
@@ -120,21 +161,21 @@ const near = new Near({
 ### Browser Wallets
 
 ```typescript
-import { NearConnector } from "@hot-labs/near-connect"
-import { Near, fromHotConnect } from "near-kit"
+import { NearConnector } from "@hot-labs/near-connect";
+import { Near, fromHotConnect } from "near-kit";
 
-const connector = new NearConnector({ network: "mainnet" })
+const connector = new NearConnector({ network: "mainnet" });
 
 connector.on("wallet:signIn", async (event) => {
   const near = new Near({
     network: "mainnet",
     wallet: fromHotConnect(connector),
-  })
-  
-  await near.call("contract.near", "method", { arg: "value" })
-})
+  });
 
-connector.connect()
+  await near.call("contract.near", "method", { arg: "value" });
+});
+
+connector.connect();
 ```
 
 **For HOT Connect and Wallet Selector integration, see [references/wallets.md](references/wallets.md)**
@@ -142,29 +183,33 @@ connector.connect()
 ## React Bindings (@near-kit/react)
 
 ```tsx
-import { NearProvider, useNear, useView, useCall } from "@near-kit/react"
+import { NearProvider, useNear, useView, useCall } from "@near-kit/react";
 
 function App() {
   return (
     <NearProvider config={{ network: "testnet" }}>
       <Counter />
     </NearProvider>
-  )
+  );
 }
 
 function Counter() {
   const { data: count, isLoading } = useView<{}, number>({
     contractId: "counter.testnet",
     method: "get_count",
-  })
+  });
 
   const { mutate: increment, isPending } = useCall({
     contractId: "counter.testnet",
     method: "increment",
-  })
+  });
 
-  if (isLoading) return <div>Loading...</div>
-  return <button onClick={() => increment({})} disabled={isPending}>Count: {count}</button>
+  if (isLoading) return <div>Loading...</div>;
+  return (
+    <button onClick={() => increment({})} disabled={isPending}>
+      Count: {count}
+    </button>
+  );
 }
 ```
 
@@ -173,19 +218,20 @@ function Counter() {
 ## Testing with Sandbox
 
 ```typescript
-import { Sandbox } from "near-kit/sandbox"
+import { Near } from "near-kit";
+import { Sandbox } from "near-kit/sandbox";
 
-const sandbox = await Sandbox.start()
-const near = new Near({ network: sandbox })
+const sandbox = await Sandbox.start();
+const near = new Near({ network: sandbox });
 
-const testAccount = `test-${Date.now()}.${sandbox.rootAccount.id}`
+const testAccount = `test-${Date.now()}.${sandbox.rootAccount.id}`;
 await near
   .transaction(sandbox.rootAccount.id)
   .createAccount(testAccount)
   .transfer(testAccount, "10 NEAR")
-  .send()
+  .send();
 
-await sandbox.stop()
+await sandbox.stop();
 ```
 
 **For sandbox patterns and Vitest integration, see [references/keys-and-testing.md](references/keys-and-testing.md)**
@@ -198,15 +244,15 @@ import {
   FunctionCallError,
   NetworkError,
   TimeoutError,
-} from "near-kit"
+} from "near-kit";
 
 try {
-  await near.call("contract.near", "method", {})
+  await near.call("contract.near", "method", {});
 } catch (error) {
   if (error instanceof InsufficientBalanceError) {
-    console.log(`Need ${error.required}, have ${error.available}`)
+    console.log(`Need ${error.required}, have ${error.available}`);
   } else if (error instanceof FunctionCallError) {
-    console.log(`Panic: ${error.panic}`, `Logs: ${error.logs}`)
+    console.log(`Panic: ${error.panic}`, `Logs: ${error.logs}`);
   }
 }
 ```
@@ -216,10 +262,21 @@ try {
 All amounts accept human-readable formats:
 
 ```typescript
-"10 NEAR"     // 10 NEAR
-"10"          // 10 NEAR
-10            // 10 NEAR
-"30 Tgas"     // 30 trillion gas units
+"10 NEAR"; // 10 NEAR
+"10"; // 10 NEAR
+10; // 10 NEAR
+("30 Tgas"); // 30 trillion gas units
+```
+
+Programmatic formatting:
+
+```typescript
+import { Amount, Gas } from "near-kit";
+
+Amount.NEAR(0.1);
+Amount.yocto(1000n);
+Amount.parse("5 NEAR");
+Gas.parse("30 Tgas");
 ```
 
 ## Key Utilities
@@ -227,21 +284,39 @@ All amounts accept human-readable formats:
 ```typescript
 import {
   generateKey,
-  parseKey,
   generateSeedPhrase,
   parseSeedPhrase,
   isValidAccountId,
-  Amount,
-  Gas,
-} from "near-kit"
+} from "near-kit";
 
-const { publicKey, privateKey } = generateKey()
-const { seedPhrase, publicKey, privateKey } = generateSeedPhrase()
-const restored = parseSeedPhrase("word1 word2 ... word12")
+// Generate new keypair
+const key = generateKey();
+// key.publicKey, key.secretKey
 
-isValidAccountId("alice.near") // true
-Amount.parse("5 NEAR")  // bigint in yoctoNEAR
-Gas.parse("30 Tgas")    // bigint in gas units
+// generateSeedPhrase() returns a string (just the phrase)
+const seedPhrase = generateSeedPhrase();
+// "word1 word2 word3 ... word12"
+
+// parseSeedPhrase() returns a KeyPair-like object
+const keyPair = parseSeedPhrase("word1 word2 ... word12");
+// keyPair.publicKey, keyPair.secretKey
+
+// Validation
+isValidAccountId("alice.near"); // true
+```
+
+## NEP-413 Verification
+
+```typescript
+import { Near, verifyNep413Signature } from "near-kit";
+
+const near = new Near({ network: "testnet" });
+
+const isValid = await verifyNep413Signature(
+  signedMessage,
+  { message: "log me in", recipient: "myapp.com", nonce: challengeBuffer },
+  { near, maxAge: Infinity },
+);
 ```
 
 ## References
