@@ -1,29 +1,29 @@
-# Structure: NEAR Bindgen
+# Structure: NEAR Contract Macros
 
-Use `#[near_bindgen]` macro to properly expose contract methods and state.
+Use `#[near(contract_state)]` macro for contract struct and `#[near]` for implementation blocks.
 
 ## Why It Matters
 
-The `#[near_bindgen]` macro is essential for NEAR smart contracts as it:
-- Generates serialization/deserialization code
-- Exposes methods to the NEAR runtime
-- Handles contract state management
-- Enables proper initialization
+The NEAR macros are essential for smart contracts as they:
+- Automatically handle Borsh serialization/deserialization
+- Expose methods to the NEAR runtime
+- Manage contract state lifecycle
+- Enable proper initialization patterns
 
 ## ❌ Incorrect
 
 ```rust
-// Missing #[near_bindgen] macro
+// Missing NEAR macros - contract won't work
 pub struct Contract {
     pub owner: AccountId,
-    pub data: UnorderedMap<AccountId, String>,
+    pub data: IterableMap<AccountId, String>,
 }
 
 impl Contract {
     pub fn new(owner: AccountId) -> Self {
         Self {
             owner,
-            data: UnorderedMap::new(b"d"),
+            data: IterableMap::new(b"d"),
         }
     }
 }
@@ -38,50 +38,74 @@ impl Contract {
 ## ✅ Correct
 
 ```rust
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::UnorderedMap;
-use near_sdk::{env, near_bindgen, AccountId, PanicOnDefault};
+use near_sdk::{near, env, require, AccountId, PanicOnDefault};
+use near_sdk::store::IterableMap;
 
-#[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+#[near(contract_state)]
+#[derive(PanicOnDefault)]
 pub struct Contract {
     owner: AccountId,
-    data: UnorderedMap<AccountId, String>,
+    data: IterableMap<AccountId, String>,
 }
 
-#[near_bindgen]
+#[near]
 impl Contract {
     #[init]
     pub fn new(owner: AccountId) -> Self {
-        assert!(!env::state_exists(), "Contract already initialized");
         Self {
             owner,
-            data: UnorderedMap::new(b"d"),
+            data: IterableMap::new(b"d"),
         }
     }
-    
-    pub fn get_owner(&self) -> AccountId {
-        self.owner.clone()
+
+    /// View function - takes &self, free to call
+    pub fn get_owner(&self) -> &AccountId {
+        &self.owner
+    }
+
+    /// Change function - takes &mut self, costs gas
+    pub fn set_data(&mut self, key: AccountId, value: String) {
+        require!(
+            env::predecessor_account_id() == self.owner,
+            "Only owner can set data"
+        );
+        self.data.insert(key, value);
     }
 }
 ```
 
 **Benefits:**
-- Proper contract structure with serialization
-- Methods are callable from outside
-- State management works correctly
-- Initialization is validated with `#[init]`
-- Uses `PanicOnDefault` to prevent uninitialized state
+- `#[near(contract_state)]` handles all serialization automatically
+- No need to manually derive `BorshDeserialize`/`BorshSerialize`
+- Methods are callable from outside via `#[near]` on impl block
+- Initialization validated with `#[init]`
+- `PanicOnDefault` prevents uninitialized state access
+
+## Data Structs (Non-Contract)
+
+For data structures used in function arguments/returns:
+
+```rust
+/// Use #[near(serializers = [...])] for data structs
+#[near(serializers = [json, borsh])]
+#[derive(Clone)]
+pub struct UserData {
+    pub name: String,
+    pub score: u64,
+}
+```
 
 ## Additional Considerations
 
-- Always derive `BorshDeserialize` and `BorshSerialize`
+- Use `#[near(contract_state)]` for the main contract struct
+- Use `#[near]` for implementation blocks (replaces second `#[near_bindgen]`)
+- Use `#[near(serializers = [json, borsh])]` for data structs returned to users
 - Use `#[init]` for initialization methods
-- Consider `PanicOnDefault` to prevent accidental default initialization
+- Use `PanicOnDefault` to prevent accidental default initialization
 - Mark view functions with `&self` (not `&mut self`)
-- Use proper collection prefixes (unique single-byte identifiers)
+- Use unique byte prefixes for all collections
 
 ## References
 
-- [Smart Contract Structure](https://docs.near.org/sdk/rust/contract-structure/near-bindgen)
-- [Initialization](https://docs.near.org/sdk/rust/contract-structure/initialization)
+- [Smart Contract Structure](https://docs.near.org/smart-contracts/anatomy/)
+- [Best Practices](https://docs.near.org/smart-contracts/anatomy/best-practices)
