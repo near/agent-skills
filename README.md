@@ -6,7 +6,6 @@ AI agent skills for NEAR Protocol blockchain development.
 
 | Skill                                                | Library                                                            | Description                                                                                                            |
 | ---------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| [near-ai](skills/near-ai/)                           | [near-ai](https://near.ai/)                                        | AI agent development and integration on NEAR Protocol                                                                  |
 | [near-ai-cloud](skills/near-ai-cloud/) | [NEAR AI Cloud Docs](https://docs.near.ai/cloud/introduction) | Verifiable private AI inference, TEE attestation, NRAS verification, GPU-CPU binding |
 | [near-api-js](skills/near-api-js/)                   | [near-api-js](https://github.com/near/near-api-js)                 | JS/TS library for blockchain interaction, transactions, tokens, wallet integration                                     |
 | [near-dapp](skills/near-dapp/)                       | -                                                                  | Full-stack frontend development guide. Project setup, wallet integration, React/Next.js patterns, contract interaction |
@@ -32,7 +31,7 @@ npx skills add near/agent-skills --skill <skill-name>
 bunx skills add near/agent-skills --skill <skill-name>
 ```
 
-Replace `<skill-name>` with: `near-ai`, `near-ai-cloud`, `near-api-js`, `near-dapp`, `near-intents`, `near-kit`, or `near-smart-contracts`.
+Replace `<skill-name>` with: `near-ai-cloud`, `near-api-js`, `near-dapp`, `near-intents`, `near-kit`, or `near-smart-contracts`.
 
 ## Usage
 
