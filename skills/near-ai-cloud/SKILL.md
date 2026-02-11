@@ -69,13 +69,13 @@ console.log(completion.choices[0].message.content);
 
 Base URL: `https://cloud-api.near.ai`
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/v1/chat/completions` | POST | OpenAI-compatible chat completions |
-| `/v1/models` | GET | List available models |
-| `/v1/attestation/report?model={model}` | GET | Model attestation (GPU + CPU) |
-| `/v1/attestation/report` | GET | Gateway attestation |
-| `/v1/signature/{chat_id}` | GET | Chat message signature |
+| Endpoint                               | Method | Description                        |
+|----------------------------------------|--------|------------------------------------|
+| `/v1/chat/completions`                 | POST   | OpenAI-compatible chat completions |
+| `/v1/models`                           | GET    | List available models              |
+| `/v1/attestation/report?model={model}` | GET    | Model attestation (GPU + CPU)      |
+| `/v1/attestation/report`               | GET    | Gateway attestation                |
+| `/v1/signature/{chat_id}`              | GET    | Chat message signature             |
 
 ## Critical Knowledge
 
@@ -88,9 +88,10 @@ Base URL: `https://cloud-api.near.ai`
 
 ## References
 
-| Topic | File |
-|-------|------|
-| **Model TEE verification** | [references/model-verification.md](references/model-verification.md) |
+| Topic                            | File                                                                 |
+|----------------------------------|----------------------------------------------------------------------|
+| **Private vs Anonymised Models** | [references/private-vs-anonymised.md](references/model-list.md)      |
+| **Model TEE verification**       | [references/model-verification.md](references/model-verification.md) |
 
 **Planned:**
 
