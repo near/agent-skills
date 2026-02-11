@@ -16,45 +16,41 @@ Detailed patterns and advanced usage examples for near-api-js.
 
 ### State & Information
 
-| Method | Description | Returns |
-|--------|-------------|---------|
-| `getState()` | Account balance, storage usage, code hash | `AccountState` |
-| `getAccessKey(publicKey)` | Single access key info | `AccessKeyView` |
-| `getAccessKeyList()` | All access keys | `AccessKeyList` |
-| `getContractCode()` | Deployed contract WASM | `{ code_base64, hash }` |
-| `getContractState(prefix?)` | Contract key-value storage | `{ values }` |
+| Method                      | Description                               | Returns                 |
+| --------------------------- | ----------------------------------------- | ----------------------- |
+| `getState()`                | Account balance, storage usage, code hash | `AccountState`          |
+| `getBalance()`              | NEAR balance                              | `bigint`                |
+| `getBalance(token)`         | FT balance for given token                | `bigint`                |
+| `getAccessKey(publicKey)`   | Single access key info                    | `AccessKeyView`         |
+| `getAccessKeyList()`        | All access keys                           | `AccessKeyList`         |
+| `getContractCode()`         | Deployed contract WASM                    | `{ code_base64, hash }` |
+| `getContractState(prefix?)` | Contract key-value storage                | `{ values }`            |
 
 ### Transactions
 
-| Method | Description |
-|--------|-------------|
-| `signAndSendTransaction({ receiverId, actions })` | Sign and broadcast single tx |
-| `signAndSendTransactions({ transactions })` | Batch multiple transactions |
-| `createTransaction({ receiverId, actions, publicKey })` | Create unsigned tx |
-| `createSignedTransaction({ receiverId, actions })` | Create signed tx without sending |
+| Method                                                  | Description                      |
+| ------------------------------------------------------- | -------------------------------- |
+| `signAndSendTransaction({ receiverId, actions })`       | Sign and broadcast single tx     |
+| `signAndSendTransactions({ transactions })`             | Batch multiple transactions      |
+| `createTransaction({ receiverId, actions, publicKey })` | Create unsigned tx               |
+| `createSignedTransaction({ receiverId, actions })`      | Create signed tx without sending |
 
 ### Account Management
 
-| Method | Description |
-|--------|-------------|
-| `createAccount({ newAccountId, publicKey, nearToTransfer? })` | Create named account |
-| `createSubAccount({ accountOrPrefix, publicKey, nearToTransfer? })` | Create `prefix.parent.near` |
-| `deleteAccount({ beneficiaryId })` | Delete account, send funds to beneficiary |
-
-### Key Management
-
-| Method | Description |
-|--------|-------------|
-| `addFunctionAccessKey({ publicKey, contractId, methodNames?, allowance? })` | Add limited key |
-| `addFullAccessKey({ publicKey })` | Add full access key |
-| `deleteKey({ publicKey })` | Remove access key |
+| Method                                                                          | Description                                        |
+| ------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `addFullAccessKey(publicKey)`                                                   | Add full access key                                |
+| `addFunctionCallAccessKey({ publicKey, contractId, methodNames?, allowance? })` | Add limited key                                    |
+| `deleteKey(publicKeyString)`                                                    | Remove access key (takes string)                   |
+| `deleteAccount(beneficiaryAccountId)`                                           | Delete account and send NEAR tokens to beneficiary |
+| `createAccount({ newAccountId, publicKey, nearToTransfer? })`                   | Create named accounts and sub-accounts for them    |
+| `createSubAccount({ accountOrPrefix, publicKey, nearToTransfer? })`             | Create `prefix.parent.near`                        |
 
 ### Tokens
 
-| Method | Description |
-|--------|-------------|
-| `transfer({ receiverId, amount, token? })` | Transfer NEAR or FT |
-| `callFunction({ contractId, methodName, args, deposit?, gas? })` | Call contract method |
+| Method                                    | Description         |
+| ----------------------------------------- | ------------------- |
+| `transfer({ receiverId, amount, token })` | Transfer NEAR or FT |
 
 ---
 
@@ -77,9 +73,9 @@ await provider.viewAccessKeyList({ accountId, finalityQuery? })
 
 ```typescript
 // Call view method (read-only)
-await provider.callFunction<ReturnType>({ 
-  contractId, 
-  method, 
+await provider.callFunction<ReturnType>({
+  contractId,
+  method,
   args,  // JSON object or Uint8Array
   blockQuery?
 })
@@ -95,13 +91,13 @@ await provider.viewContractState({ contractId, prefix?, blockQuery? })
 
 ```typescript
 // View block
-await provider.viewBlock({ finality: "final" })
-await provider.viewBlock({ blockId: 12345 })
-await provider.viewBlock({ blockId: "9eVs..." })
+await provider.viewBlock({ finality: "final" });
+await provider.viewBlock({ blockId: 12345 });
+await provider.viewBlock({ blockId: "9eVs..." });
 
 // View chunk
-await provider.viewChunk({ chunkId: "HFks..." })
-await provider.viewChunk({ blockId: 12345, shardId: 0 })
+await provider.viewChunk({ chunkId: "HFks..." });
+await provider.viewChunk({ blockId: 12345, shardId: 0 });
 ```
 
 ### Transaction
@@ -167,7 +163,10 @@ actions.deleteKey(publicKey: PublicKey)
 actions.deleteAccount(beneficiaryId: string)
 
 // Use global contract
-actions.useGlobalContract(identifier: string | Uint8Array)
+actions.useGlobalContract(identifier: { accountId: string } | { codeHash: string | Uint8Array })
+
+// Deploy global contract
+actions.deployGlobalContract(code: Uint8Array, deployMode: 'codeHash' | 'accountId')
 
 // Staking
 actions.stake(amount: bigint, publicKey: PublicKey)
@@ -183,29 +182,29 @@ actions.signedDelegate(signedDelegateAction: SignedDelegateAction)
 ### Key Types
 
 ```typescript
-type CurveType = "ed25519" | "secp256k1"
-type KeyPairString = `${CurveType}:${string}`
+type CurveType = "ed25519" | "secp256k1";
+type KeyPairString = `${CurveType}:${string}`;
 ```
 
 ### Block Reference
 
 ```typescript
-type BlockReference = 
+type BlockReference =
   | { finality: "final" | "optimistic" }
-  | { blockId: number | string }  // height or hash
-  | { syncCheckpoint: "genesis" | "earliest_available" }
+  | { blockId: number | string } // height or hash
+  | { syncCheckpoint: "genesis" | "earliest_available" };
 ```
 
 ### Transaction Status
 
 ```typescript
-type TxExecutionStatus = 
+type TxExecutionStatus =
   | "NONE"
   | "INCLUDED"
   | "INCLUDED_FINAL"
   | "EXECUTED"
   | "EXECUTED_OPTIMISTIC"
-  | "FINAL"
+  | "FINAL";
 ```
 
 ### AccountState
@@ -213,13 +212,13 @@ type TxExecutionStatus =
 ```typescript
 interface AccountState {
   balance: {
-    total: bigint
-    usedOnStorage: bigint
-    locked: bigint
-    available: bigint
-  }
-  storageUsage: number
-  codeHash: string
+    total: bigint;
+    usedOnStorage: bigint;
+    locked: bigint;
+    available: bigint;
+  };
+  storageUsage: number;
+  codeHash: string;
 }
 ```
 
@@ -227,108 +226,130 @@ interface AccountState {
 
 ## Advanced Patterns
 
+### Manual Transaction Signing
+
+```typescript
+import {
+  JsonRpcProvider,
+  Account,
+  KeyPairSigner,
+  actions,
+  KeyPairString,
+} from "near-api-js";
+import { NEAR } from "near-api-js/tokens";
+
+const provider = new JsonRpcProvider({ url: "https://test.rpc.fastnear.com" });
+
+// Signer exists separately from Account
+const signer = KeyPairSigner.fromSecretKey(privateKey);
+
+// Account without signer — just needs account ID and provider
+const account = new Account(accountId, provider);
+
+// 1. Create transaction (requires public key)
+const transaction = await account.createTransaction({
+  receiverId: "receiver-account.testnet",
+  actions: [actions.transfer(NEAR.toUnits("0.1"))],
+  publicKey: await signer.getPublicKey(),
+});
+
+// 2. Sign transaction
+const signResult = await signer.signTransaction(transaction);
+
+// 3. Send transaction
+const sendResult = await provider.sendTransaction(signResult.signedTransaction);
+```
+
 ### Parallel Transactions with MultiKeySigner
 
 ```typescript
-import { Account, MultiKeySigner, KeyPair, actions } from "near-api-js"
-import { NEAR } from "near-api-js/tokens"
+import {
+  Account,
+  actions,
+  JsonRpcProvider,
+  KeyPair,
+  MultiKeySigner,
+  KeyPairString,
+} from "near-api-js";
+import { NEAR } from "near-api-js/tokens";
 
-// Add multiple keys to account first
-const keys = Array.from({ length: 10 }, () => KeyPair.fromRandom("ed25519"))
+const provider = new JsonRpcProvider({ url: "https://test.rpc.fastnear.com" });
+const account = new Account(accountId, provider, privateKey);
+
+// Create 10 keys and add them to the account on-chain
+const keys: KeyPair[] = [];
+const txActions: ReturnType<typeof actions.addFullAccessKey>[] = [];
+for (let j = 0; j < 10; j++) {
+  const newKeyPair = KeyPair.fromRandom("ed25519");
+  keys.push(newKeyPair);
+  txActions.push(actions.addFullAccessKey(newKeyPair.getPublicKey()));
+}
+
 await account.signAndSendTransaction({
-  receiverId: account.accountId,
-  actions: keys.map(k => actions.addFullAccessKey(k.getPublicKey()))
-})
+  receiverId: accountId,
+  actions: txActions,
+});
 
-// Use MultiKeySigner for parallel txs
-const multiSigner = new MultiKeySigner(keys)
-const multiAccount = new Account(accountId, provider, multiSigner)
+// Use MultiKeySigner for parallel transactions
+const multiKeySigner = new MultiKeySigner(keys);
+const multiAccount = new Account(accountId, provider, multiKeySigner);
 
-// Send 100 transfers in parallel
-const transfers = Array.from({ length: 100 }, (_, i) =>
+// Send 100 transfers in parallel — no nonce collisions
+const transfers = [...Array(100)].map(() =>
   multiAccount.transfer({
-    receiverId: `user${i}.testnet`,
-    amount: NEAR.toUnits("0.01"),
-    token: NEAR
-  })
-)
-await Promise.all(transfers)
+    token: NEAR,
+    amount: NEAR.toUnits("0.001"),
+    receiverId: "influencer.testnet",
+  }),
+);
+
+const results = await Promise.all(transfers);
 ```
 
-### Custom Contract Interface
+### Access Key Management
 
 ```typescript
-import { Contract, Account } from "near-api-js"
+import {
+  Account,
+  JsonRpcProvider,
+  KeyPair,
+  KeyPairString,
+  nearToYocto,
+} from "near-api-js";
+import { NEAR } from "near-api-js/tokens";
 
-interface MyContract {
-  // View methods (read-only)
-  get_message(): Promise<string>
-  get_count(): Promise<number>
-  
-  // Change methods (require gas)
-  set_message(args: { message: string }): Promise<void>
-  increment(): Promise<void>
-}
+const provider = new JsonRpcProvider({ url: "https://test.rpc.fastnear.com" });
 
-const contract = new Contract(
-  account,
-  "my-contract.near",
-  {
-    viewMethods: ["get_message", "get_count"],
-    changeMethods: ["set_message", "increment"]
-  }
-) as unknown as MyContract
+// Query keys via provider
+const keys = await provider.viewAccessKeyList({ accountId });
 
-// Usage
-const message = await contract.get_message()
-await contract.set_message({ message: "Hello" })
-```
+// Create Account without signer, add signer later
+const account = new Account(accountId, provider, privateKey as KeyPairString);
 
-### NEP-413 Message Signing
+// Query keys via account
+const accessKeys = await account.getAccessKeyList();
 
-```typescript
-// Sign off-chain message (for authentication)
-const signed = await account.signNep413Message({
-  message: "Login to MyApp",
-  recipient: "myapp.com",
-  nonce: crypto.getRandomValues(new Uint8Array(32))
-})
+// Generate new keys
+const fullKeyPair = KeyPair.fromRandom("ed25519");
+const fnKeyPair = KeyPair.fromRandom("ed25519");
 
-// Returns: { signature, publicKey, accountId }
-```
+// Add full access key
+await account.addFullAccessKey(fullKeyPair.getPublicKey());
 
-### Handling Nonce Errors
+// Add function call access key — takes an OBJECT
+await account.addFunctionCallAccessKey({
+  publicKey: fnKeyPair.getPublicKey(),
+  contractId: "example-contract.testnet",
+  methodNames: ["example_method"],
+  allowance: nearToYocto("0.25"), // put "0" for unlimited allowance
+});
 
-```typescript
-import { InvalidNonceError } from "near-api-js"
+// Switch signer to use new key
+account.setSigner(new KeyPairSigner(fullKeyPair));
 
-try {
-  await account.signAndSendTransaction({
-    receiverId,
-    actions,
-    retries: 3  // Auto-retry on nonce errors
-  })
-} catch (error) {
-  if (error instanceof InvalidNonceError) {
-    // Handle stale nonce
-  }
-}
-```
-
-### Access Key Allowance Management
-
-```typescript
-// Add function call key with 1 NEAR allowance
-await account.addFunctionAccessKey({
-  publicKey: newKey.getPublicKey(),
-  contractId: "contract.near",
-  methodNames: ["method1", "method2"],  // empty = all methods
-  allowance: NEAR.toUnits("1")  // gas allowance in NEAR
-})
-
-// Check remaining allowance
-const keyInfo = await account.getAccessKey(newKey.getPublicKey())
-console.log(keyInfo.permission.FunctionCall.allowance)
+// Delete keys
+await account.deleteKey(fnKeyPair.getPublicKey());
+await account.deleteKey(fullKeyPair.getPublicKey());
 ```
 
 ### Wait for Transaction Finality
@@ -337,7 +358,42 @@ console.log(keyInfo.permission.FunctionCall.allowance)
 const result = await account.signAndSendTransaction({
   receiverId: "contract.near",
   actions: [...],
-  waitUntil: "FINAL",  // Wait for finality
-  throwOnFailure: true  // Throw on execution failure
+  waitUntil: "FINAL", // Wait for transaction to be fully finalized on-chain
 })
+```
+
+### Error Handling
+
+```typescript
+import {
+  AccountDoesNotExistActionError,
+  // and many more
+} from "near-api-js/rpc-errors";
+
+try {
+  await account.signAndSendTransaction({
+    receiverId: "unexisted_account.testnet",
+    actions: [...]
+  });
+} catch (error) {
+  if (error instanceof AccountDoesNotExistActionError) {
+    console.error(
+      `Transaction ${error.txHash} failed because recipient ${error.accountId} does not exist!`,
+    );
+  }
+}
+```
+
+### Manual Error Handling (not recommended)
+
+```typescript
+
+const result = await account.signAndSendTransaction({
+    receiverId: "unexisted_account.testnet",
+    actions: [...],
+    throwOnFailure: false // Don't throw on failure, return result object instead
+  });
+
+// do manual error handling on result
+console.log(result);
 ```
