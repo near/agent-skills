@@ -7,7 +7,7 @@ Fluent API for constructing multi-action NEAR transactions.
 - [Available Actions](#available-actions)
 - [Multi-Action Transactions](#multi-action-transactions)
 - [Meta-Transactions (NEP-366)](#meta-transactions-nep-366)
-- [Advanced Patterns](#advanced-patterns)
+- [Manual Sign Flow](#manual-sign-flow)
 
 ---
 
@@ -29,8 +29,6 @@ console.log("Transaction hash:", receipt.transaction.hash)
 ### Transfer
 
 ```typescript
-.transfer(receiverId: string, amount: Amount)
-
 await near
   .transaction("alice.near")
   .transfer("bob.near", "10 NEAR")
@@ -40,13 +38,6 @@ await near
 ### Function Call
 
 ```typescript
-.functionCall(
-  contractId: string,
-  methodName: string,
-  args?: object | Uint8Array,
-  options?: { gas?: Gas; attachedDeposit?: Amount }
-)
-
 await near
   .transaction("alice.near")
   .functionCall(
@@ -61,8 +52,6 @@ await near
 ### Create Account
 
 ```typescript
-.createAccount(accountId: string)
-
 await near
   .transaction("alice.near")
   .createAccount("sub.alice.near")
@@ -73,8 +62,6 @@ await near
 ### Delete Account
 
 ```typescript
-.deleteAccount({ beneficiary: string })
-
 await near
   .transaction("account-to-delete.near")
   .deleteAccount({ beneficiary: "alice.near" })
@@ -84,7 +71,6 @@ await near
 ### Deploy Contract
 
 ```typescript
-.deployContract(accountId: string, code: Uint8Array)
 
 const wasm = await fs.readFile("./contract.wasm")
 await near
@@ -96,22 +82,16 @@ await near
 ### Add Key
 
 ```typescript
-.addKey(
-  accountId: string,
-  publicKey: string,
-  permission: AccessKeyPermission
-)
-
 // Full access key
 await near
   .transaction("alice.near")
-  .addKey("alice.near", "ed25519:...", { type: "fullAccess" })
+  .addKey("ed25519:...", { type: "fullAccess" })
   .send()
 
 // Function call access key
 await near
   .transaction("alice.near")
-  .addKey("alice.near", "ed25519:...", {
+  .addKey("ed25519:...", {
     type: "functionCall",
     receiverId: "contract.near",
     methodNames: ["transfer", "approve"],
@@ -123,8 +103,6 @@ await near
 ### Delete Key
 
 ```typescript
-.deleteKey(accountId: string, publicKey: string)
-
 await near
   .transaction("alice.near")
   .deleteKey("alice.near", "ed25519:...")
@@ -134,8 +112,6 @@ await near
 ### Stake
 
 ```typescript
-.stake(amount: Amount, publicKey: string)
-
 await near
   .transaction("alice.near")
   .stake("100 NEAR", "ed25519:...")
@@ -145,8 +121,6 @@ await near
 ### Signed Delegate Action
 
 ```typescript
-.signedDelegateAction(signedDelegate: SignedDelegateAction)
-
 // Used by relayers to submit meta-transactions
 await near
   .transaction("relayer.near")
@@ -161,17 +135,19 @@ await near
 Chain multiple actions in a single atomic transaction:
 
 ```typescript
+// Batch function call + transfer
+const result = await near.transaction(accountId)
+  .functionCall("counter.near-examples.testnet", "increment", {}, { gas: "30 Tgas" })
+  .transfer("counter.near-examples.testnet", "0.001 NEAR")
+  .send()
+
+// Create + fund + deploy + initialize
 await near
   .transaction("alice.near")
-  // Create new account
   .createAccount("app.alice.near")
-  // Fund it
   .transfer("app.alice.near", "5 NEAR")
-  // Add access key
-  .addKey("app.alice.near", publicKey, { type: "fullAccess" })
-  // Deploy contract
+  .addKey(publicKey, { type: "fullAccess" })
   .deployContract("app.alice.near", contractWasm)
-  // Initialize contract
   .functionCall("app.alice.near", "init", { owner: "alice.near" })
   .send()
 ```
@@ -237,98 +213,38 @@ const result = await relayerNear
 // Contract sees user as the signer, relayer paid the gas
 ```
 
-### Delegate Options
-
-```typescript
-.delegate({
-  blockHeightOffset?: number,  // Validity window (default: 100 blocks)
-  maxBlockHeight?: bigint,     // Explicit max block height
-  receiverId?: string,         // Override receiver
-  nonce?: bigint,              // Explicit nonce
-  publicKey?: string,          // Specific key to use
-  payloadFormat?: "base64" | "bytes", // Output format
-})
-```
-
 ---
 
-## Global Contracts
+## Manual Sign Flow
 
-Actions for the global contract registry. See [global-contracts.md](global-contracts.md) for details.
-
-### Publish Contract
+Build, sign, inspect, and send transactions separately.
 
 ```typescript
-// Updatable (identified by account)
-await near
-  .transaction("factory.near")
-  .publishContract(wasm)
-  .send()
+import { Near } from "near-kit"
 
-// Immutable (identified by hash)
-await near
-  .transaction("factory.near")
-  .publishContract(wasm, { identifiedBy: "hash" })
-  .send()
-```
+// No private key needed in the Near instance for manual signing
+const near = new Near({ network: "testnet" })
 
-### Deploy from Published
+// Build a transaction and attach a signer key
+const tx = near
+  .transaction(accountId)
+  .transfer("receiver-account.testnet", "0.001 NEAR")
+  .signWith(privateKey)  // specify which key signs
 
-```typescript
-// From account (updatable)
-.deployFromPublished({ accountId: "factory.near" })
+// Sign the transaction (but don't send yet)
+await tx.sign()
 
-// From hash (immutable)
-.deployFromPublished({ codeHash: "5FzD8..." })
-```
+// Get the transaction hash before sending
+const hash = tx.getHash()
+console.log("Transaction hash:", hash)
 
-### State Init (NEP-616)
+// Serialize the signed transaction (for offline use or external sending)
+const serialized = tx.serialize()
+console.log("Serialized transaction bytes:", serialized.length)
 
-Deploy to deterministic address:
-
-```typescript
-const encoder = new TextEncoder();
-
-.stateInit({
-  code: { accountId: "publisher.near" },
-  data: new Map([
-    [encoder.encode("owner"), encoder.encode("alice.near")]
-  ]),
-  deposit: "1 NEAR",
-})
-```
-
----
-
-## Advanced Patterns
-
-### Building Without Sending
-
-```typescript
-// Build the transaction
-const tx = await near
-  .transaction("alice.near")
-  .transfer("bob.near", "1 NEAR")
-  .build()
-
-// Sign it
-const signedTx = await near
-  .transaction("alice.near")
-  .transfer("bob.near", "1 NEAR")
-  .sign()
-
-// Send separately
-const result = await signedTx.send()
-```
-
-### Custom Signer Key
-
-```typescript
-await near
-  .transaction("alice.near")
-  .signWith("ed25519:...") // Use specific private key
-  .transfer("bob.near", "1 NEAR")
-  .send()
+// Now send the signed transaction
+const result = await tx.send()
+console.log("Transaction sent:", result.transaction.hash)
 ```
 
 ### Wait Until Options
