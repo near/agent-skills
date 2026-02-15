@@ -1,4 +1,4 @@
-# Low & Informational Severity
+# Low Severity
 
 Issues with limited direct impact but worth addressing for code quality and defense in depth.
 
@@ -9,7 +9,6 @@ Issues with limited direct impact but worth addressing for code quality and defe
   - [Unsafe Math](#unsafe-math)
   - [Unclaimed Storage Fee](#unclaimed-storage-fee)
   - [Floating Point Math](#floating-point-math)
-- [Informational](#informational)
 
 ---
 

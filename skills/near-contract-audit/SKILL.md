@@ -63,4 +63,4 @@ For detailed vulnerability documentation with code examples:
 
 - [high-severity.md](references/high-severity.md) - Critical vulnerabilities (8 detectors)
 - [medium-severity.md](references/medium-severity.md) - Medium vulnerabilities (4 detectors)
-- [low-info-severity.md](references/low-info-severity.md) - Low severity findings (3 detectors)
+- [low-severity.md](references/low-severity.md) - Low severity findings (3 detectors)
