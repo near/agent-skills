@@ -4,57 +4,9 @@ Issues that can cause financial loss, contract malfunction, or degraded security
 
 ## Table of Contents
 
-- [Lock Callback](#lock-callback)
 - [Gas Griefing / DoS](#gas-griefing--dos)
 - [Insecure Randomness](#insecure-randomness)
 - [Prepaid Gas](#prepaid-gas)
-
----
-
-## Lock Callback
-
-**Detector ID**: `lock-callback`
-
-Never panic in callbacks or in between cross-contract call functions. Panicking in a callback prevents state recovery when promises fail, potentially locking the contract permanently.
-
-### Vulnerable Code
-
-```rust
-fn process_order(&mut self, order_id: u32) -> Promise {
-    self.delete_order(order_id);  // State changed
-    ext_contract::do_transfer(receiver, amount)
-        .then(ext_self::callback_transfer(order_id))
-}
-
-#[private]
-pub fn callback_transfer(&mut self, order_id: u32) {
-    assert!(order_id > 0);  // ❌ Panic before recovery check!
-
-    match env::promise_result(0) {
-        PromiseResult::Failed => self.recover_order(order_id),  // Never reached
-        _ => {}
-    }
-}
-```
-
-### Fixed Code
-
-```rust
-#[private]
-pub fn callback_transfer(&mut self, order_id: u32) {
-    // ✅ Check promise result FIRST, handle recovery
-    match env::promise_result(0) {
-        PromiseResult::Successful(_) => {
-            // Only validate on success
-            assert!(order_id > 0);
-        }
-        PromiseResult::Failed => {
-            self.recover_order(order_id);  // Always recovers
-        }
-        PromiseResult::NotReady => unreachable!(),
-    }
-}
-```
 
 ---
 

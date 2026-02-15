@@ -49,7 +49,6 @@ Document findings with severity, location, description, and remediation.
 | **High**   | `yocto-attach`                   | Missing `assert_one_yocto` on sensitive functions |
 | **High**   | `storage-collision`              | Same storage prefix for different collections   |
 | **High**   | `required-initialization-macro`  | Missing `#[init]` on initialization method      |
-| **Medium** | `lock-callback`                  | Panic in callback can lock contract             |
 | **Medium** | `gas-griefing`                   | Unbounded loops causing DoS                     |
 | **Medium** | `insecure-random`                | Predictable randomness from block data          |
 | **Medium** | `prepaid-gas`                    | Insufficient gas reserved for callbacks         |
