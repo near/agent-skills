@@ -3,39 +3,15 @@
 Critical security issues that can lead to fund loss, unauthorized access, or contract compromise.
 
 ## Table of Contents
-- [Unhandled Promise](#unhandled-promise)
+
 - [Non-Private Callback](#non-private-callback)
 - [Reentrancy](#reentrancy)
-- [Unsafe Math](#unsafe-math)
-- [Self Transfer](#self-transfer)
-- [Incorrect JSON Type](#incorrect-json-type)
+- [Incorrect Argument/Return Types](#incorrect-argumentreturn-types)
 - [Unsaved Changes](#unsaved-changes)
-- [NFT Approval Check](#nft-approval-check)
-- [NFT Owner Check](#nft-owner-check)
+- [Owner Check](#owner-check)
+- [Yocto Attach](#yocto-attach)
 - [Storage Collision](#storage-collision)
-- [Improper Initialization](#improper-initialization)
-
----
-
-## Unhandled Promise
-
-**Detector ID**: `unhandled-promise`
-
-Promise results must be handled by a callback. Unhandled promises prevent state rollback on failure.
-
-### Vulnerable Code
-```rust
-// ❌ Promise result not handled
-token.ft_transfer_call(receiver, U128(amount), None, "".to_string());
-// Contract won't know if transfer failed, state not rolled back
-```
-
-### Fixed Code
-```rust
-// ✅ Promise handled with callback
-token.ft_transfer_call(receiver, U128(amount), None, "".to_string())
-    .then(ext_self::on_transfer_complete(amount))
-```
+- [Required Initialization Macro](#required-initialization-macro)
 
 ---
 
@@ -46,6 +22,7 @@ token.ft_transfer_call(receiver, U128(amount), None, "".to_string())
 Callback functions must have `#[private]` macro to prevent external invocation.
 
 ### Vulnerable Code
+
 ```rust
 // ❌ Anyone can call this callback directly
 pub fn callback_stake(&mut self) {
@@ -54,6 +31,7 @@ pub fn callback_stake(&mut self) {
 ```
 
 ### Fixed Code
+
 ```rust
 // ✅ Only contract itself can invoke
 #[private]
@@ -68,9 +46,10 @@ pub fn callback_stake(&mut self) {
 
 **Detector ID**: `reentrancy`
 
-State must be updated BEFORE cross-contract calls. Updating state only in callbacks enables reentrancy.
+State must be updated BEFORE cross-contract calls. NEAR Protocol is an async blockchain, so promises are typically processed in the next blocks. Between the cross-contract call and the callback execution, other transactions targeting the same contract may be executed, potentially exploiting stale state. The best practice is to optimistically update state before the cross-contract call and roll it back in the callback if the original promise failed.
 
 ### Vulnerable Code
+
 ```rust
 // ❌ State updated after external call (in callback)
 pub fn withdraw(&mut self, amount: u128) -> Promise {
@@ -82,13 +61,17 @@ pub fn withdraw(&mut self, amount: u128) -> Promise {
 
 #[private]
 pub fn on_withdraw(&mut self, amount: u128) {
-    if env::promise_result(0).is_successful() {
-        self.balance -= amount;  // Too late!
+    match env::promise_result(0) {
+        PromiseResult::Successful(_) => {
+            self.balance -= amount;  // Too late!
+        }
+        _ => {}
     }
 }
 ```
 
 ### Fixed Code
+
 ```rust
 // ✅ State updated before external call
 pub fn withdraw(&mut self, amount: u128) -> Promise {
@@ -100,79 +83,27 @@ pub fn withdraw(&mut self, amount: u128) -> Promise {
 
 #[private]
 pub fn on_withdraw(&mut self, amount: u128) {
-    if !env::promise_result(0).is_successful() {
-        self.balance += amount;  // Restore on failure
+    match env::promise_result(0) {
+        PromiseResult::Successful(_) => {
+            // No action needed - state already updated
+        }
+        _ => {
+            self.balance += amount;  // Restore on not successful result
+        }
     }
 }
 ```
 
 ---
 
-## Unsafe Math
+## Incorrect Argument/Return Types
 
-**Detector ID**: `unsafe-math`
+**Detector ID**: `incorrect-argument-or-return-types`
 
-Arithmetic operations can overflow. Enable overflow checks or use checked math.
-
-### Vulnerable Code
-```toml
-# Cargo.toml
-[profile.release]
-overflow-checks = false  # ❌ Overflow not checked
-```
-
-```rust
-let a = b + c;  // ❌ Can overflow silently
-```
-
-### Fixed Code
-```toml
-# Cargo.toml
-[profile.release]
-overflow-checks = true  # ✅ Panics on overflow
-```
-
-Or use checked operations:
-```rust
-let a = b.checked_add(c).expect("overflow");  // ✅ Explicit check
-```
-
----
-
-## Self Transfer
-
-**Detector ID**: `self-transfer`
-
-Token transfers must validate sender ≠ receiver to prevent infinite minting exploits.
+JSON only supports integers up to 2^53-1. Use wrapped types (U64, U128, I64, I128) from `near_sdk::json_types` for public method arguments and return values that can realistically exceed this limit (e.g. token amounts, timestamps in nanoseconds). For values that will never grow that large (e.g. a pagination page number), native Rust types like `u16` or `u32` are fine. Internally, always use native Rust types for state storage — wrappers are only needed at the JSON serialization boundary.
 
 ### Vulnerable Code
-```rust
-// ❌ No sender/receiver check
-pub fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128) {
-    let sender_id = env::predecessor_account_id();
-    self.internal_transfer(&sender_id, &receiver_id, amount.0);
-}
-```
 
-### Fixed Code
-```rust
-// ✅ Validate different accounts
-pub fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128) {
-    let sender_id = env::predecessor_account_id();
-    require!(sender_id != receiver_id, "Sender and receiver must differ");
-    self.internal_transfer(&sender_id, &receiver_id, amount.0);
-}
-```
-
----
-
-## Incorrect JSON Type
-
-**Detector ID**: `incorrect-json-type`
-
-JSON only supports integers up to 2^53-1. Use wrapped types (U64, U128, I64, I128) for large numbers.
-
-### Vulnerable Code
 ```rust
 // ❌ u64 exceeds JSON safe integer range
 pub fn get_balance(&self) -> u64 {
@@ -180,13 +111,40 @@ pub fn get_balance(&self) -> u64 {
 }
 ```
 
+```rust
+use near_sdk::json_types::U128;
+
+// ❌ storing as U128 in the state is inefficient
+struct Contract {
+    balances: UnorderedMap<AccountId, U128>
+}
+```
+
 ### Fixed Code
+
 ```rust
 use near_sdk::json_types::U64;
 
-// ✅ Wrapped type serializes as string
+// ✅ Wrapped argument type deserializes from a string
+pub fn withdraw(&mut self, amount: U128) {
+    // ...
+}
+
+// ✅ Wrapped return type serializes as string
 pub fn get_balance(&self) -> U64 {
     U64(self.total_supply)
+}
+
+// ✅ Pagination arguments uses native types
+pub fn read_with_pagination(&self, page: u16, limit: Option<u16>) {
+    // ...
+}
+```
+
+```rust
+// ✅ Contract state uses native types
+struct Contract {
+    balances: UnorderedMap<AccountId, u128>
 }
 ```
 
@@ -196,9 +154,10 @@ pub fn get_balance(&self) -> U64 {
 
 **Detector ID**: `unsaved-changes`
 
-Changes to `near_sdk::collections` must be explicitly saved with `insert()`.
+When using `near_sdk::store`, modifications to collection entries still require explicit writes: use `insert()` for maps and sets, and `push()` for vectors. Forgetting to persist changes will silently lose them.
 
 ### Vulnerable Code
+
 ```rust
 // ❌ Changes lost - no insert after modification
 pub fn modify(&mut self, change: i128) {
@@ -209,69 +168,74 @@ pub fn modify(&mut self, change: i128) {
 ```
 
 ### Fixed Code
+
 ```rust
-// ✅ Changes persisted
+// ✅ Changes persisted with insert()
 pub fn modify(&mut self, change: i128) {
     let account = env::predecessor_account_id();
     let mut balance = self.accounts.get(&account).unwrap();
     balance = balance.checked_add(change).unwrap();
-    self.accounts.insert(&account, &balance);  // Save!
-}
-```
-
-> **Note**: `near_sdk::store` (v4.1.0+) auto-saves changes, avoiding this issue.
-
----
-
-## NFT Approval Check
-
-**Detector ID**: `nft-approval-check`
-
-NFT transfers by non-owners must validate `approval_id` to prevent unauthorized transfers.
-
-### Vulnerable Code
-```rust
-// ❌ No approval_id validation
-fn nft_transfer(&mut self, receiver_id: AccountId, token_id: TokenId) {
-    // Anyone with any approval can transfer
-    self.internal_transfer(sender, receiver_id, token_id, None);
-}
-```
-
-### Fixed Code
-```rust
-// ✅ Verify approval_id matches
-fn nft_transfer(&mut self, receiver_id: AccountId, token_id: TokenId, approval_id: Option<u64>) {
-    let approved = self.tokens.get(&token_id).approved_accounts;
-    let actual_id = approved.get(&sender_id).expect("Not approved");
-    require!(approval_id.is_none() || approval_id == Some(*actual_id), "Invalid approval");
-    self.internal_transfer(sender, receiver_id, token_id, approval_id);
+    self.accounts.insert(account, balance);  // Save!
 }
 ```
 
 ---
 
-## NFT Owner Check
+## Owner Check
 
-**Detector ID**: `nft-owner-check`
+**Detector ID**: `owner-check`
 
-NFT approve/revoke functions must verify caller is the token owner.
+Admin functions (e.g. that modify state, handle assets, etc) must verify the caller's identity via `predecessor_account_id()` to prevent unauthorized invocations.
 
 ### Vulnerable Code
+
 ```rust
-// ❌ Anyone can approve themselves
-pub fn nft_approve(&mut self, token_id: TokenId, account_id: AccountId) {
-    self.tokens.approve(token_id, account_id);
+// ❌ No caller verification - anyone can call
+pub fn update_config(&mut self, new_value: u64) {
+    self.config_value = new_value;
 }
 ```
 
 ### Fixed Code
+
 ```rust
-// ✅ Only owner can approve
-pub fn nft_approve(&mut self, token_id: TokenId, account_id: AccountId) {
-    let owner = self.tokens.owner_of(&token_id).expect("No token");
-    require!(env::predecessor_account_id() == owner, "Not owner");
-    self.tokens.approve(token_id, account_id);
+// ✅ Verify caller is owner
+pub fn update_config(&mut self, new_value: u64) {
+    require!(
+        env::predecessor_account_id() == self.owner_id,
+        "Only owner can update config"
+    );
+    self.config_value = new_value;
+}
+```
+
+---
+
+## Yocto Attach
+
+**Detector ID**: `yocto-attach`
+
+NEAR accounts support two types of keys - FullAccess and FunctionCall. Only FullAccess keys can sign transactions with an attached deposit. As an extra security measure, wallets require users to explicitly confirm transactions that need to be signed with a FullAccess key. Therefore, important functions (e.g. transfers, claims) should include `assert_one_yocto()`, as this forces the use of a FullAccess key and wallet confirmation, preventing a malicious dApp from silently invoking the function via a FunctionCall key.
+
+### Vulnerable Code
+
+```rust
+// ❌ No deposit required - can be invoked with a FunctionCall key
+pub fn claim(&mut self) {
+    let account_id = env::predecessor_account_id();
+    self.internal_claim(&account_id);
+}
+```
+
+### Fixed Code
+
+```rust
+// ✅ Requires FullAccess key + wallet confirmation
+#[payable]
+pub fn claim(&mut self) {
+    assert_one_yocto();
+    let account_id = env::predecessor_account_id();
+    self.internal_claim(&account_id);
 }
 ```
 
@@ -281,67 +245,92 @@ pub fn nft_approve(&mut self, token_id: TokenId, account_id: AccountId) {
 
 **Detector ID**: `storage-collision`
 
-Using the same storage prefix for different collections results in data corruption and potential fund loss.
+NEAR smart contracts store data in a key-value storage. Collections from `near_sdk::store` provide gas-efficient access by storing each item at an individual key — when reading data, only the needed value is loaded rather than the entire collection. To prevent key collisions between different collections, each one is assigned a unique prefix. The recommended way to define prefixes is via an enum implementing the `BorshStorageKey` trait, which gives you human-readable names that internally resolve to a single byte.
+
+Using the same prefix for different collections results in data corruption and potential loss of data.
 
 ### Vulnerable Code
+
 ```rust
 #[near(contract_state)]
 pub struct Contract {
-    // ❌ Both maps use the same prefix "a"
-    fungible_tokens: UnorderedMap<AccountId, u128>, // prefix: b"a"
-    non_fungible_tokens: UnorderedMap<TokenId, AccountId>, // prefix: b"a"
+    users: UnorderedMap<AccountId, UserInfo>,
+    configurations: UnorderedMap<String, Config>,
 }
 
 impl Default for Contract {
     fn default() -> Self {
+        // ❌ Both maps use the same prefix "a"
         Self {
-            fungible_tokens: UnorderedMap::new(b"a"),
-            non_fungible_tokens: UnorderedMap::new(b"a"),
+            users: UnorderedMap::new(b"a"), // prefix: b"a"
+            configurations: UnorderedMap::new(b"a"), // prefix: b"a"
         }
     }
 }
 ```
 
 ### Fixed Code
+
 ```rust
 #[near(contract_state)]
 pub struct Contract {
-    // ✅ Distinct prefixes
-    fungible_tokens: UnorderedMap<AccountId, u128>,
-    non_fungible_tokens: UnorderedMap<TokenId, AccountId>,
+    users: UnorderedMap<AccountId, UserInfo>,
+    configurations: UnorderedMap<String, Config>,
 }
 
 impl Default for Contract {
     fn default() -> Self {
+    // ✅ Distinct prefixes "u" and "c"
         Self {
-            fungible_tokens: UnorderedMap::new(b"a"),
-            non_fungible_tokens: UnorderedMap::new(b"b"),
+            users: UnorderedMap::new(b"u"),
+            configurations: UnorderedMap::new(b"c"),
         }
     }
 }
 ```
-> **Tip**: Use `BorshStorageKey` enum to manage prefixes safely.
+
+### Fixed Code (Recommended)
+
+```rust
+#[derive(BorshSerialize, BorshStorageKey)]
+enum StorageKey {
+    Users,
+    Configurations,
+}
+
+#[near(contract_state)]
+pub struct Contract {
+    users: UnorderedMap<AccountId, UserInfo>,
+    configurations: UnorderedMap<String, Config>,
+}
+
+impl Default for Contract {
+    fn default() -> Self {
+    // ✅ Distinct prefixes via enum
+        Self {
+            users: UnorderedMap::new(StorageKey::Users),
+            configurations: UnorderedMap::new(StorageKey::Configurations),
+        }
+    }
+}
+```
+
+> **Warning**: Once the contract is deployed, never change the order of `StorageKey` enum variants and never delete them — doing so will shift the internal prefix bytes and break existing on-chain data.
 
 ---
 
-## Improper Initialization
+## Required Initialization Macro
 
-**Detector ID**: `improper-init`
+**Detector ID**: `required-initialization-macro`
 
-Failing to enforce initialization allows attackers to initialize the contract with their own parameters (e.g., setting themselves as owner).
+The contract initialization method must be annotated with `#[init]` to prevent it from being executed multiple times. This macro checks whether the contract state already exists, and if so, fails the transaction. Without it, an attacker could re-initialize the contract with their own parameters (e.g. setting themselves as owner).
 
 ### Vulnerable Code
-```rust
-// ❌ No initialization check
-#[near(contract_state)]
-#[derive(PanicOnDefault)]
-pub struct Contract {
-    owner: AccountId,
-}
 
+```rust
+// ❌ No #[init] — can be called multiple times
 #[near]
 impl Contract {
-    // Anyone can call this if not already initialized!
     pub fn new(owner: AccountId) -> Self {
         Self { owner }
     }
@@ -349,16 +338,14 @@ impl Contract {
 ```
 
 ### Fixed Code
+
 ```rust
-// ✅ Enforce initialization
+// ✅ #[init] prevents re-initialization
 #[near]
 impl Contract {
     #[init]
-    #[private] // Optional: if you want to restrict who can deploy+init
     pub fn new(owner: AccountId) -> Self {
         Self { owner }
     }
 }
 ```
-or use `#[init(ignore_state)]` if migrating. Ideally, ensure the contract is initialized in the same transaction as deployment (`deploy_and_init`).
-
