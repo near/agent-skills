@@ -1,0 +1,9 @@
+node_modules
+.pnpm-store
+
+coverage
+*.log
+
+sdk/*/dist
+
+examples/near-agent-market-autopilot/state

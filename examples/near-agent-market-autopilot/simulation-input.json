@@ -1,0 +1,35 @@
+{
+  "nowIso": "2026-02-28T00:00:00.000Z",
+  "jobs": [
+    {
+      "job_id": "job-sim-1",
+      "title": "Simulated job",
+      "budget_amount": "1.5",
+      "budget_token": "NEAR",
+      "job_type": "standard"
+    },
+    {
+      "job_id": "job-sim-2",
+      "title": "Simulated competition",
+      "budget_amount": "2.2",
+      "budget_token": "NEAR",
+      "job_type": "competition"
+    }
+  ],
+  "bidsByJobId": {
+    "job-sim-1": [
+      { "bid_id": "existing-1", "amount": "0.8" }
+    ],
+    "job-sim-2": []
+  },
+  "trackedBids": [
+    { "bidId": "tracked-accepted", "jobId": "job-sim-1", "status": "accepted", "amountNear": 0.9 }
+  ],
+  "submitStateByKey": {
+    "job-sim-1:tracked-accepted": {
+      "attempts": 1,
+      "firstSeenAt": "2026-02-27T22:00:00.000Z",
+      "escalations": 0
+    }
+  }
+}

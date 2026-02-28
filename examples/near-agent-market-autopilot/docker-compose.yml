@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  autopilot:
+    build:
+      context: ../..
+      dockerfile: examples/near-agent-market-autopilot/Dockerfile
+    command: ["run", "--config", "/config/config.json", "--interval-ms", "120000"]
+    volumes:
+      - ./minimal-bot.config.json:/config/config.json:ro
+      - ./state:/state
+    environment:
+      - NODE_ENV=production

@@ -1,0 +1,16 @@
+{
+  "minBudgetNear": 0.05,
+  "maxBudgetNear": 20,
+  "bidDiscountBps": 6500,
+  "minBidNear": 0.03,
+  "maxBidNear": 10,
+  "maxExistingBids": 10,
+  "minMarginNear": 0.015,
+  "stalePendingBidMinutes": 25,
+  "submitRetryLimit": 4,
+  "submitRetryBackoffMinutes": 10,
+  "submitRetryMaxBackoffMinutes": 120,
+  "submitEscalateAfterMinutes": 45,
+  "submitEscalationLimit": 4,
+  "failClosed": true
+}
