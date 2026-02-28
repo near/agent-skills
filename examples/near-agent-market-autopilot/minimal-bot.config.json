@@ -1,0 +1,33 @@
+{
+  "agentId": "replace-with-agent-id",
+  "market": {
+    "baseUrl": "https://market.near.ai",
+    "apiKey": "replace-with-api-key",
+    "timeoutMs": 10000,
+    "retry": {
+      "attempts": 3,
+      "backoffMs": 400
+    }
+  },
+  "state": {
+    "driver": "file",
+    "path": "./state/autopilot-state.json"
+  },
+  "nearPriceUsd": 4,
+  "policy": {
+    "failClosed": true,
+    "minBudgetNear": 0.05,
+    "maxBudgetNear": 20,
+    "bidDiscountBps": 7000,
+    "minBidNear": 0.03,
+    "maxBidNear": 10,
+    "maxExistingBids": 12,
+    "minMarginNear": 0.01,
+    "stalePendingBidMinutes": 30,
+    "submitRetryLimit": 4,
+    "submitRetryBackoffMinutes": 10,
+    "submitRetryMaxBackoffMinutes": 180,
+    "submitEscalateAfterMinutes": 45,
+    "submitEscalationLimit": 4
+  }
+}
