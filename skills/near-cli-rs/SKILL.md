@@ -9,7 +9,22 @@ description: Generate near-cli-rs v0.14+ commands for NEAR Protocol — account 
 
 **Rule:** Always produce complete commands from `near` through the final action token (`send`, `display`, `now`, `create`, etc.). Never omit `network-config <NETWORK>`.
 
-**Version:** near-cli-rs v0.14+ (tested through v0.24)
+**Version:** near-cli-rs v0.14+ (tested through v0.30.x, 2026-09)
+
+**Sources:** [near/near-cli-rs](https://github.com/near/near-cli-rs) · [Releases](https://github.com/near/near-cli-rs/releases) · [docs.near.org/tools/cli](https://docs.near.org/tools/cli)
+
+## Changes Since v0.24 (v0.25–v0.30.x)
+
+Newer CLI versions changed behavior worth knowing when generating commands:
+
+- **Gas keys** (nearcore 2.13+): transactions can be signed with a gas key; signing prompts a `nonce_index` selection. `near transaction sign-message` also supports gas-key signing.
+- **Post-quantum keys (draft)**: ML-DSA-65 keys can be generated in v0.28+ (`ml-dsa-65:` key format); pubkey display includes `ml-dsa-65-hash`. Experimental — usually stick with `ed25519`.
+- **Removed:** the standalone `generate-keypair` command (use `account import-account` with a locally generated key instead).
+- **New commands:** `tokens send-ft-call` (`ft_transfer_call` on the `tokens` subcommand); `account import-account` works non-interactively against an existing account; `contract state-init` initializes a new contract's state at deploy time.
+- **Defaults changed:** function-call gas limits updated to 1000 TGas; contract-surface FT listing improved (view FTs for all contracts in an account, not only a hardcoded list).
+- Global-hash deployment is retry-safe; beneficiary account is validated before `account delete-account`.
+
+Verify exact syntax with `near --help` / `near <group> <subcommand> --help` if your CLI version disagrees with a generated command here.
 
 ---
 
@@ -592,6 +607,7 @@ near transaction send-signed-transaction '<SIGNED_TX_BASE64>' network-config mai
 | Implicit account | 64-char lowercase hex        | `a4b05ef3...`                   |
 | Standard HD path | `m/44'/397'/0'`              | NEAR BIP44                      |
 | Ledger HD path   | `m/44'/397'/0'/0'/N'`        | 5-component required for Ledger |
+| PQ public key (v0.28+, draft) | `ml-dsa-65:<BASE58>` | post-quantum keys; experimental |
 
 ---
 
