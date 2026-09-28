@@ -1,9 +1,9 @@
 ---
 name: near-ai-cloud
-description: NEAR AI Cloud private inference and verification. Use when integrating NEAR AI Cloud API for verifiable private AI inference, verifying model or gateway TEE attestation (NVIDIA NRAS, Intel TDX), verifying chat message signatures, implementing end-to-end encrypted chat, or using the OpenAI-compatible API with NEAR AI Cloud.
+description: NEAR AI Cloud private inference and verification. Use when integrating NEAR AI Cloud API for verifiable private AI inference, verifying model or gateway TEE attestation (NVIDIA NRAS, Intel TDX), verifying chat message signatures, implementing end-to-end encrypted chat, using specialized TEE endpoints (embeddings, reranking, images, audio, PII redaction), or using the OpenAI-compatible API with NEAR AI Cloud.
 metadata:
   author: near
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # NEAR AI Cloud
@@ -69,18 +69,19 @@ console.log(completion.choices[0].message.content);
 
 Base URL: `https://cloud-api.near.ai`
 
-| Endpoint                               | Method | Description                        |
-|----------------------------------------|--------|------------------------------------|
-| `/v1/chat/completions`                 | POST   | OpenAI-compatible chat completions |
-| `/v1/models`                           | GET    | List available models              |
-| `/v1/attestation/report?model={model}` | GET    | Model attestation (GPU + CPU)      |
-| `/v1/attestation/report`               | GET    | Gateway attestation                |
-| `/v1/signature/{chat_id}`              | GET    | Chat message signature             |
+| Endpoint                                        | Method | Description                                        |
+|-------------------------------------------------|--------|----------------------------------------------------|
+| `/v1/chat/completions`                          | POST   | OpenAI-compatible chat completions                 |
+| `/v1/models`                                    | GET    | List available models                              |
+| `/v1/attestation/report?model={model}`          | GET    | Model attestation (GPU + CPU) — **requires API key** |
+| `/v1/attestation/report`                        | GET    | Gateway attestation — requires API key             |
+| `/v1/signature/{chat_id}`                       | GET    | Chat message signature (also covers Responses API `resp_*`) |
 
 ## Critical Knowledge
 
 - Base URL is `https://cloud-api.near.ai/v1` — use with any OpenAI SDK
 - `signing_algo` can be `ecdsa` or `ed25519`
+- **Attestation report now requires an API key** — `Authorization: Bearer <key>`; retrieval is free and non-billable
 - Nonce should be a random 64-char hex string (32 bytes) for attestation freshness
 - NRAS response is a two-part array: `[["JWT", "..."], {"GPU-0": "..."}]` — overall JWT + per-GPU JWTs
 - The `signing_address` from model attestation **must match** the address that signed chat messages
@@ -88,23 +89,29 @@ Base URL: `https://cloud-api.near.ai`
 
 ## References
 
-| Topic                            | File                                                                 |
-|----------------------------------|----------------------------------------------------------------------|
-| **Private vs Anonymised Models** | [references/private-vs-anonymised.md](references/model-list.md)      |
-| **Model TEE verification**       | [references/model-verification.md](references/model-verification.md) |
+| Topic                            | File                                                                                |
+|----------------------------------|-------------------------------------------------------------------------------------|
+| **Private vs Anonymised Models** | [references/private-vs-anonymised.md](references/private-vs-anonymised.md)           |
+| **Model TEE verification**       | [references/model-verification.md](references/model-verification.md)                |
+| **Gateway verification + TLS**   | [references/gateway-verification.md](references/gateway-verification.md)            |
+| **Chat message verification**    | [references/chat-verification.md](references/chat-verification.md)                  |
+| **E2E encrypted chat (E2EE)**    | [references/e2ee-chat.md](references/e2ee-chat.md)                                  |
+| **Specialized endpoints**        | [references/specialized-endpoints.md](references/specialized-endpoints.md)          |
 
-**Planned:**
+## Upstream Docs (prefer live values)
 
-- Gateway verification (TDX attestation for the API gateway + source provenance)
-- Chat verification (request/response hashing + signature verification)
-- E2E encrypted chat (ECDH key exchange, AES-256-GCM / ChaCha20-Poly1305)
-- OpenAI compatibility (streaming, reasoning models, Files API)
+- [OpenAI compatibility](https://docs.near.ai/cloud/guides/openai-compatibility) — streaming, reasoning, Files API behavior
+- [Stateless Responses API](https://docs.near.ai/cloud/guides/stateless-responses) — `resp_*` stateless responses
+- [Prompt caching](https://docs.near.ai/cloud/guides/prompt-caching)
+- [Web search](https://docs.near.ai/cloud/guides/web-search) — server-side live web results
+- [Staking for inference](https://docs.near.ai/cloud/staking-for-inference/overview) — pay with staking rewards
+- [Usage reporting API](https://docs.near.ai/cloud/guides/usage-reporting)
+- [Model discovery & refresh](https://docs.near.ai/cloud/guides/integrations/model-discovery)
 
 ## Resources
 
 - NEAR AI Cloud: https://cloud.near.ai
-- Documentation: https://docs.near.ai/cloud/introduction
-- Verification Example: https://github.com/near-examples/nearai-cloud-verification-example
+- Documentation: https://docs.near.ai/cloud/introduction- Verification Example: https://github.com/near-examples/nearai-cloud-verification-example
 - Full Verifier: https://github.com/nearai/nearai-cloud-verifier
 - NVIDIA NRAS API: https://docs.api.nvidia.com/attestation/reference/attestmultigpu_1
 - TEE Attestation Explorer: https://proof.t16z.com/

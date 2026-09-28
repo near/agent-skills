@@ -1,5 +1,7 @@
 # Model List
 
+> **This table may drift.** The authoritative, always-current source of truth is the API: `GET https://cloud-api.near.ai/v1/models` (public listing with pricing: [list-models-with-pricing](https://docs.near.ai/api-reference/models/list-models-with-pricing.md)). Model names containing `/` must be URL-encoded.
+
 Complete guide to AI models available on NEAR AI Cloud. Choose the right model for your use case based on privacy, cost, context size, and capabilities.
 
 > Quick links:
@@ -140,6 +142,8 @@ curl https://cloud-api.near.ai/v1/chat/completions \
 ```
 
 > To disable thinking mode, set `"thinking": false`
+
+See [Reasoning Models](https://docs.near.ai/cloud/reasoning-models) for the current list of models supporting reasoning and per-model controls.
 
 ---
 

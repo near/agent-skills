@@ -29,8 +29,11 @@ GET https://cloud-api.near.ai/v1/attestation/report?model={model_name}&signing_a
 NONCE=$(openssl rand -hex 32)
 
 curl "https://cloud-api.near.ai/v1/attestation/report?model=deepseek-ai/DeepSeek-V3.1&signing_algo=ecdsa&nonce=${NONCE}" \
-  -H 'accept: application/json'
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer <YOUR-NEAR-AI-CLOUD-API-KEY>'
 ```
+
+> **API key required.** The attestation report endpoint requires authentication (`nearai/infra#193`); report retrieval is non-billable — no usage or billing records are created.
 
 ### JavaScript
 
@@ -42,7 +45,7 @@ const nonce = crypto.randomBytes(32).toString('hex');
 
 const response = await fetch(
   `https://cloud-api.near.ai/v1/attestation/report?model=${MODEL_NAME}&signing_algo=ecdsa&nonce=${nonce}`,
-  { headers: { 'accept': 'application/json' } }
+  { headers: { 'accept': 'application/json', 'Authorization': `Bearer ${process.env.NEAR_AI_CLOUD_API_KEY}` } }
 );
 
 const data = await response.json();
@@ -62,7 +65,7 @@ nonce = secrets.token_hex(32)
 
 response = requests.get(
     f'https://cloud-api.near.ai/v1/attestation/report?model={MODEL_NAME}&signing_algo=ecdsa&nonce={nonce}',
-    headers={'accept': 'application/json'}
+    headers={'accept': 'application/json', 'Authorization': f'Bearer {os.environ["NEAR_AI_CLOUD_API_KEY"]}'}
 )
 
 data = response.json()
