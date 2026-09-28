@@ -11,6 +11,13 @@ description: >
 
 # NEAR dApp
 
+## Upstream Documentation
+
+- [Web3 App Quickstart](https://docs.near.org/web3-apps/quickstart) — official first-dApp guide
+- [Wallet Connector](https://docs.near.org/tools/near-connect) — official docs for the `@hot-labs/near-connect` connector used here
+- [Wallet Login tutorial](https://docs.near.org/web3-apps/tutorials/wallet-login)
+- [create-near-app repo](https://github.com/near/create-near-app) — scaffolding tool source (templates verified: `auction`, `auction-adv`; `--help` is authoritative)
+
 ## Decision Router
 
 Determine which path to follow:

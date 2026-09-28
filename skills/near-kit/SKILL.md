@@ -327,3 +327,10 @@ For detailed documentation on specific topics:
 - **[Wallet Integration](references/wallets.md)** - HOT Connect, Wallet Selector, universal patterns
 - **[Transaction Builder](references/transactions.md)** - All actions, meta-transactions (NEP-366)
 - **[Keys and Testing](references/keys-and-testing.md)** - Key stores, utilities, sandbox, NEP-413 signing
+
+## Upstream & Provenance
+
+- **near-kit is a community library** — [r-near/near-kit](https://github.com/r-near/near-kit) (npm: `near-kit`, `@near-kit/react`; current ^0.20.x)
+- Official docs do not cover near-kit; verify new APIs against the repo README before relying on exact signatures here
+- For plain near-api-js and RPC details, see the official docs: [docs.near.org/tools/near-api](https://docs.near.org/tools/near-api)
+- Wallet Selector is superseded by the [near-connect connector](https://docs.near.org/tools/near-connect) for new apps — see [references/wallets.md](references/wallets.md)
