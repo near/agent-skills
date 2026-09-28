@@ -24,7 +24,8 @@ For Stellar (MEMO mode), include memo:
 | Status | Terminal | Description |
 |--------|----------|-------------|
 | `PENDING_DEPOSIT` | No | Waiting for deposit to arrive |
-| `PROCESSING` | No | Deposit detected, swap executing |
+| `KNOWN_DEPOSIT_TX` | No | Deposit transaction detected |
+| `PROCESSING` | No | Swap being executed |
 | `SUCCESS` | Yes | Complete - tokens delivered |
 | `INCOMPLETE_DEPOSIT` | Yes | Deposit below required amount |
 | `REFUNDED` | Yes | Failed, funds returned to refundTo |

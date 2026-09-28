@@ -8,6 +8,8 @@ tags: api, quote, swap
 
 Generates swap quote. Use `dry: true` for preview, `dry: false` to get deposit address.
 
+**Authentication on quotes:** without an API key, an extra **0.25% (25 bps)** fee applies to every non-`ANY_INPUT` quote. With a JWT: **0.20%** (20 bps), or **0.01% (1 bp)** for stablecoin pairs and same-asset multichain routes; with `appFees`, revenue is split 50/50 with 1Click keeping its minimum. Not applicable to `ANY_INPUT` quotes (1Click fees skip them entirely). Source: [Fees](https://docs.near-intents.org/resources/fees.md).
+
 ## Request Fields
 
 ### Required
@@ -26,9 +28,9 @@ Generates swap quote. Use `dry: true` for preview, `dry: false` to get deposit a
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `depositType` | string | `ORIGIN_CHAIN` | Where you'll deposit from. `ORIGIN_CHAIN` = deposit on source blockchain. `INTENTS` = deposit from intents.near balance |
-| `recipientType` | string | `DESTINATION_CHAIN` | Where output goes. `DESTINATION_CHAIN` = send to destination blockchain. `INTENTS` = credit to intents.near balance |
-| `refundType` | string | `ORIGIN_CHAIN` | Where refunds go. `ORIGIN_CHAIN` = refund to source blockchain. `INTENTS` = refund to intents.near balance |
+| `depositType` | string | `ORIGIN_CHAIN` | Where you'll deposit from. `ORIGIN_CHAIN` = deposit on source blockchain. `INTENTS` = deposit from public intents.near balance. `CONFIDENTIAL_INTENTS` = deposit from a Confidential Intents balance (requires signed-intent execution) |
+| `recipientType` | string | `DESTINATION_CHAIN` | Where output goes. `DESTINATION_CHAIN` = send to destination blockchain. `INTENTS` = credit to public intents.near balance. `CONFIDENTIAL_INTENTS` = credit to a Confidential Intents balance |
+| `refundType` | string | `ORIGIN_CHAIN` | Where refunds go. `ORIGIN_CHAIN` = refund to source blockchain. `INTENTS` = refund to intents.near balance. `CONFIDENTIAL_INTENTS` = refund to a Confidential Intents balance |
 | `depositMode` | string | `SIMPLE` | `SIMPLE` = standard deposit address. `MEMO` = deposit address + memo (required for Stellar) |
 
 ### Optional - Pricing
@@ -38,6 +40,7 @@ Generates swap quote. Use `dry: true` for preview, `dry: false` to get deposit a
 | `slippageTolerance` | number | - | Max acceptable slippage in basis points. 100 = 1%. Affects `minAmountOut` |
 | `deadline` | string | ~10min | ISO timestamp. Quote expires after this. User must deposit before deadline |
 | `quoteWaitingTimeMs` | number | 3000 | How long to wait for market maker quotes (ms). Use `0` for fastest response |
+| `confidentiality` | string | `public` | `public`, `basic`, or `advanced`. Enables a confidential swap on an otherwise normal quote — see [api-confidential-swaps](api-confidential-swaps.md) |
 
 ### Optional - Fees & Tracking
 
@@ -182,7 +185,7 @@ const committed = await fetch('https://1click.chaindefuser.com/v0/quote', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'Authorization': 'Bearer YOUR_API_KEY' // Avoid 0.1% fee
+    'Authorization': 'Bearer YOUR_JWT_TOKEN' // Authenticated fee schedule (see below)
   },
   body: JSON.stringify({
     dry: false, // Commit!

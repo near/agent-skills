@@ -30,7 +30,8 @@ Request Quote → Deposit Tokens → Submit Tx Hash → Monitor Status → Succe
 | Status | Terminal | Description |
 |--------|----------|-------------|
 | `PENDING_DEPOSIT` | No | Waiting for deposit at deposit address |
-| `PROCESSING` | No | Deposit detected, Market Makers executing |
+| `KNOWN_DEPOSIT_TX` | No | Deposit transaction detected |
+| `PROCESSING` | No | Swap being executed by Market Makers |
 | `SUCCESS` | Yes | Tokens delivered to recipient |
 | `INCOMPLETE_DEPOSIT` | Yes | Deposit below required amount |
 | `REFUNDED` | Yes | Swap failed, funds returned to refund address |
@@ -44,7 +45,7 @@ Centralized exchanges (CEXes) often use intermediate or per-user deposit address
 
 ## Authentication
 
-Register on the [Partners Portal](https://partners.near-intents.org/) to obtain an API key and avoid the 0.1% (10 basis points) fee.
+Register on the [Partners Portal](https://partners.near-intents.org/) to obtain an API key. Without it, 1Click adds an extra 0.25% (25 bps) fee on every non-`ANY_INPUT` quote. With an API key, the fee is 0.20% normally, or 0.01% (1 bp) for stablecoin pairs and same-asset multichain routes. See the [fee schedule](https://docs.near-intents.org/resources/fees.md).
 
 ```typescript
 headers: { Authorization: `Bearer ${apiKey}` }
