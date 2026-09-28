@@ -379,7 +379,7 @@ near-sdk-contract-tools = "3.0"
 
 - [near-sdk-contract-tools](https://github.com/near/near-sdk-contract-tools)
 - [FT Tutorial with Contract Tools](https://docs.near.org/primitives/ft/sdk-contract-tools)
-- [NFT Tutorial with Contract Tools](https://docs.near.org/primitives/nft/nft-contract-tools)
+- [NFT Tutorial with Contract Tools](https://docs.near.org/primitives/nft/sdk-contract-tools)
 - [Examples](https://github.com/near/near-sdk-contract-tools/tree/develop/examples)
 - [NEP-297 Standard](https://github.com/near/NEPs/blob/master/neps/nep-0297.md)
 - [Events in Contract Standards](https://docs.near.org/smart-contracts/anatomy/events)

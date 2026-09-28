@@ -229,6 +229,31 @@ Each rule file contains:
 - Correct code example with explanation
 - Additional context and NEAR-specific considerations
 
+## Additional Rules (Upstream Docs)
+
+Rules without a local file — consult the official docs (append `.md` for plain markdown):
+
+| Topic | Upstream |
+|-------|----------|
+| Security checklist (overall) | https://docs.near.org/smart-contracts/security/checklist |
+| Storage cost attacks | https://docs.near.org/smart-contracts/security/storage |
+| Private callbacks | https://docs.near.org/smart-contracts/security/cross-contract-calls/callbacks |
+| Refund attached NEAR on XCC failure | https://docs.near.org/smart-contracts/security/cross-contract-calls/refunds |
+| Do not panic in callbacks | https://docs.near.org/smart-contracts/security/cross-contract-calls/callback-panics |
+| Secure `ft_on_transfer` / reentrancy | https://docs.near.org/smart-contracts/security/cross-contract-calls/ft-transfer-call |
+| Balance deduction before transfer | https://docs.near.org/smart-contracts/security/cross-contract-calls/reentrancy |
+| Require one yoctoNEAR | https://docs.near.org/smart-contracts/security/one_yocto |
+| Sybil attacks | https://docs.near.org/smart-contracts/security/sybil |
+| Front-running | https://docs.near.org/smart-contracts/security/frontrunning |
+| Duplicate token IDs | https://docs.near.org/smart-contracts/security/duplicate-inputs |
+| Random numbers | https://docs.near.org/smart-contracts/security/random |
+| Unit testing | https://docs.near.org/smart-contracts/testing/unit-test |
+| Global contracts | https://docs.near.org/smart-contracts/global-contracts |
+| Serialization | https://docs.near.org/smart-contracts/anatomy/serialization |
+| Production builds | https://docs.near.org/smart-contracts/anatomy/reduce-size |
+
+---
+
 ## Latest Tools & Versions
 
 ### Development Tools
@@ -242,7 +267,7 @@ Each rule file contains:
 
 ### SDK Versions
 
-- **near-sdk-rs**: v5.x (v6.x coming with structured errors support)
+- **near-sdk-rs**: v5.x (latest 5.29.x) — current stable SDK; `#[handle_result]` and `#[near(contract_state)]` are the modern idioms
 - **near-sdk-contract-tools**: Latest - Derive macros for NEP standards (FT, NFT, Storage Management)
 
 ### Key Features
@@ -271,7 +296,7 @@ Each rule file contains:
 - Contract Upgrades: <https://docs.near.org/smart-contracts/release/upgrade>
 - Chain Signatures: <https://docs.near.org/chain-abstraction/chain-signatures>
 - Chain Signatures Implementation: <https://docs.near.org/chain-abstraction/chain-signatures/implementation>
-- Security Best Practices: <https://docs.near.org/smart-contracts/security/welcome>
+- Security Best Practices: <https://docs.near.org/smart-contracts/security/checklist>
 - Integration Testing: <https://docs.near.org/smart-contracts/testing/integration-test>
 - NEP-297 Events: <https://github.com/near/NEPs/blob/master/neps/nep-0297.md>
 - NEAR Standards (NEPs): <https://github.com/near/NEPs>

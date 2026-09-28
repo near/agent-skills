@@ -137,4 +137,4 @@ impl Contract {
 ## References
 
 - [Collections](https://docs.near.org/smart-contracts/anatomy/collections)
-- [Storage Management](https://docs.near.org/concepts/storage/storage-staking)
+- [Storage Management](https://docs.near.org/protocol/storage/storage-staking)

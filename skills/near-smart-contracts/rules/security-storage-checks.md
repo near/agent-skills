@@ -120,6 +120,6 @@ pub fn register(&mut self) {
 
 ## References
 
-- [Storage Staking](https://docs.near.org/concepts/storage/storage-staking)
+- [Storage Staking](https://docs.near.org/protocol/storage/storage-staking)
 - [Security - Storage](https://docs.near.org/smart-contracts/security/storage)
 - [NEP-145: Storage Management](https://github.com/near/NEPs/blob/master/neps/nep-0145.md)

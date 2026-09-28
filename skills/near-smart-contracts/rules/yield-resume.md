@@ -237,6 +237,6 @@ Timeout occurs after ~200 blocks (~2 minutes). When timeout happens:
 ## References
 
 - [Yield & Resume Documentation](https://docs.near.org/smart-contracts/anatomy/yield-resume)
-- [Yield Resume Blog Post](https://docs.near.org/blog/yield-resume)
+- [Yield Resume Blog Post](https://docs.near.org/smart-contracts/anatomy/yield-resume)
 - [Example Implementation](https://github.com/near-examples/yield-resume)
-- [Shade Agent AI DAO Tutorial (yield/resume in practice)](https://docs.near.org/ai/shade-agents/tutorials/ai-dao/overview)
+- [Shade Agent AI DAO Tutorial (yield/resume in practice)](https://docs.near.org/ai/shade-agents/getting-started/introduction)
