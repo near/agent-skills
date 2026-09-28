@@ -575,3 +575,10 @@ For detailed patterns and advanced usage, see:
 - [Meta Transactions](references/meta_transactions.md) - Gasless transactions, relayer integration
 - [NEP-413](references/nep413.md) - NEP-413 message signing & verification
 - [Contracts](references/contracts.md) - Typed Contract with ABI, Contract without ABI
+
+## Upstream Documentation
+
+- [API Libraries (docs.near.org)](https://docs.near.org/tools/near-api) — official near-api-js guide
+- [near-api-js on npm](https://www.npmjs.com/package/near-api-js) — current version (v7.x)
+- [RPC Providers list](https://docs.near.org/api/rpc/providers) — public endpoints change; check here before hardcoding an RPC URL (examples above use `rpc.mainnet.near.org` and FastNEAR mirrors)
+- [JSON-RPC reference](https://docs.near.org/api/rpc/introduction) — underlying RPC methods the library wraps
