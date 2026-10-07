@@ -8,6 +8,8 @@ AI agent skills for NEAR Protocol blockchain development.
 | ---------------------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
 | [near-ai-cloud](skills/near-ai-cloud/) | [NEAR AI Cloud Docs](https://docs.near.ai/cloud/introduction) | Verifiable private AI inference, TEE attestation, NRAS verification, GPU-CPU binding |
 | [near-api-js](skills/near-api-js/)                   | [near-api-js](https://github.com/near/near-api-js)                 | JS/TS library for blockchain interaction, transactions, tokens, wallet integration                                     |
+| [near-cli-rs](skills/near-cli-rs/)                   | [near-cli-rs](https://github.com/near/near-cli-rs)                 | Non-interactive CLI command generation. Accounts, token transfers, staking, contract deploys and calls, signing        |
+| [near-contract-audit](skills/near-contract-audit/)   | -                                                                  | Security audit workflow for Rust contracts. Reentrancy, unhandled promises, unsafe math, access control, callbacks     |
 | [near-dapp](skills/near-dapp/)                       | -                                                                  | Full-stack frontend development guide. Project setup, wallet integration, React/Next.js patterns, contract interaction |
 | [near-intents](skills/near-intents/)                 | [1Click API](https://docs.near-intents.org/)                       | Cross-chain swaps via REST API across EVM, Solana, NEAR, TON, Stellar, Tron                                            |
 | [near-kit](skills/near-kit/)                         | [near-kit](https://github.com/r-near/near-kit)                     | TypeScript SDK with intuitive API, type-safe contracts, sandbox testing                                                |
@@ -31,7 +33,7 @@ npx skills add near/agent-skills --skill <skill-name>
 bunx skills add near/agent-skills --skill <skill-name>
 ```
 
-Replace `<skill-name>` with: `near-ai-cloud`, `near-api-js`, `near-dapp`, `near-intents`, `near-kit`, or `near-smart-contracts`.
+Replace `<skill-name>` with: `near-ai-cloud`, `near-api-js`, `near-cli-rs`, `near-contract-audit`, `near-dapp`, `near-intents`, `near-kit`, or `near-smart-contracts`.
 
 ## Usage
 
