@@ -206,7 +206,7 @@ await account.addFunctionCallAccessKey({
   publicKey: newKeyPair.getPublicKey(),
   contractId: "contract.near",
   methodNames: ["method1", "method2"], // Empty = all methods
-  allowance: nearToYocto("0.25"), // "0" for unlimited
+  allowance: nearToYocto("0.25"), // the default if omitted; "0" is a zero budget, not unlimited
 });
 ```
 

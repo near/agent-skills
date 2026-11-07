@@ -35,8 +35,8 @@ const quote = await fetch('https://1click.chaindefuser.com/v0/quote', {
   body: JSON.stringify({
     dry: false,
     swapType: 'EXACT_INPUT',
-    originAsset: 'nep141:sol-EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v.omft.near',
-    destinationAsset: 'nep141:sol-EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v.omft.near', // Same
+    originAsset: 'nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near',
+    destinationAsset: 'nep141:sol-5ce3bf3a31af18be40ba30f721101b4341690186.omft.near', // Same
     depositType: 'INTENTS',
     recipientType: 'DESTINATION_CHAIN',
     recipient: 'SolanaAddress...',

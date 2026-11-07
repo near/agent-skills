@@ -1,6 +1,6 @@
 # Chat Message Verification
 
-Verify each chat message was produced inside the trusted environment. Three values:
+Verify the signature on a chat response. Three values:
 
 1. **Request hash** — SHA-256 of the exact JSON request body sent over the wire
 2. **Response hash** — SHA-256 of the exact response payload string received
@@ -8,7 +8,7 @@ Verify each chat message was produced inside the trusted environment. Three valu
 
 > Working implementation: [NEAR AI Cloud Verification Example](https://github.com/near-examples/nearai-cloud-verification-example)
 
-Source: https://docs.near.ai/cloud/verification/chat
+Source: https://docs.near.ai/cloud/verification/cloud-api/response-signatures
 
 ## Two Signature Kinds
 
@@ -29,8 +29,7 @@ import crypto from 'crypto';
 const requestBody = JSON.stringify({
   messages: [{ content: 'Respond with only two words.', role: 'user' }],
   stream: true,
-  model: 'Qwen/Qwen3.5-122B-A10B',
-  chat_template_kwargs: { enable_thinking: false },
+  model: 'z-ai/glm-5.3-flash',
 });
 
 const hash = crypto.createHash('sha256').update(requestBody).digest('hex');
@@ -42,8 +41,7 @@ import hashlib, json
 request_body = {
     "messages": [{"content": "Respond with only two words.", "role": "user"}],
     "stream": True,
-    "model": "Qwen/Qwen3.5-122B-A10B",
-    "chat_template_kwargs": {"enable_thinking": False},
+    "model": "z-ai/glm-5.3-flash",
 }
 
 # Same formatting as the JS example: compact separators
@@ -56,7 +54,7 @@ hash_hex = hashlib.sha256(request_body_str.encode()).hexdigest()
 Hash the exact response payload string:
 
 ```js
-const response = await fetch('https://qwen35-122b.completions.near.ai/v1/chat/completions', {
+const response = await fetch('https://glm-5-3-flash.completions.near.ai/v1/chat/completions', {
   method: 'POST',
   headers: {
     'accept': 'application/json',
@@ -80,7 +78,7 @@ Use the response `id` (chat id):
 - **Via gateway:** `GET https://cloud-api.near.ai/v1/signature/{chat_id}?model={model_id}&signing_algo=ecdsa`
 
 ```bash
-curl -X GET 'https://qwen35-122b.completions.near.ai/v1/signature/afa7975eaf844b1888776cf41548e230?signing_algo=ecdsa' \
+curl -X GET 'https://glm-5-3-flash.completions.near.ai/v1/signature/afa7975eaf844b1888776cf41548e230?signing_algo=ecdsa' \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer <YOUR-NEARAI-CLOUD-API-KEY>"
 ```
@@ -91,7 +89,7 @@ curl -X GET 'https://qwen35-122b.completions.near.ai/v1/signature/afa7975eaf844b
 
 ```json
 {
-  "text": "Qwen/Qwen3.5-122B-A10B:{request_hash}:{response_hash}",
+  "text": "z-ai/glm-5.3-flash:{request_hash}:{response_hash}",
   "signature": "0x...",
   "signing_address": "0x...",
   "signing_algo": "ecdsa"

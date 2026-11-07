@@ -8,6 +8,10 @@ description: >-
   (8) converting between NEAR units (yocto, gas), (9) gasless/meta transactions with relayers,
   (10) NEP-413 message signing for authentication,
   (11) storage deposit management for FT contracts. Triggers on any NEAR blockchain development tasks.
+  Also use to give an app's users on-chain accounts and let the app act for them: users who never pay
+  gas or hold a gas token, an app or game that can act for a user only within limits (function-call
+  access keys restricted to one contract and chosen methods), accounts or per-player sub-accounts
+  created by the app, or sign-in that proves which account a user controls.
 ---
 
 # near-api-js Skill
@@ -165,7 +169,7 @@ await account.addFunctionCallAccessKey({
   publicKey: keyPair.getPublicKey(), // or string "ed25519:2ASWc..."
   contractId: "contract.testnet",
   methodNames: ["example_method"],
-  allowance: nearToYocto("0.25"), // use "0" for unlimited
+  allowance: nearToYocto("0.25"), // the default if omitted; "0" is a zero budget, not unlimited
 });
 
 // Delete key

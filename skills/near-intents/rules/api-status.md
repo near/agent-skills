@@ -27,7 +27,7 @@ For Stellar (MEMO mode), include memo:
 | `KNOWN_DEPOSIT_TX` | No | Deposit transaction detected |
 | `PROCESSING` | No | Swap being executed |
 | `SUCCESS` | Yes | Complete - tokens delivered |
-| `INCOMPLETE_DEPOSIT` | Yes | Deposit below required amount |
+| `INCOMPLETE_DEPOSIT` | No | Deposit below required amount, refunded by the deadline |
 | `REFUNDED` | Yes | Failed, funds returned to refundTo |
 | `FAILED` | Yes | Error occurred |
 
@@ -67,7 +67,7 @@ async function pollUntilComplete(depositAddress: string, apiKey?: string) {
     );
     const status = await res.json();
 
-    if (['SUCCESS', 'FAILED', 'REFUNDED', 'INCOMPLETE_DEPOSIT'].includes(status.status)) {
+    if (['SUCCESS', 'FAILED', 'REFUNDED'].includes(status.status)) {
       return status;
     }
 

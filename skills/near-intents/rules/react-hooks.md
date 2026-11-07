@@ -70,7 +70,7 @@ export function useSwapStatus(depositAddress: string | null, apiKey?: string) {
       }).then((r) => r.json()),
     enabled: !!depositAddress,
     refetchInterval: (q) =>
-      ['SUCCESS', 'FAILED', 'REFUNDED', 'INCOMPLETE_DEPOSIT'].includes(q.state.data?.status)
+      ['SUCCESS', 'FAILED', 'REFUNDED'].includes(q.state.data?.status)
         ? false
         : 2000,
   });

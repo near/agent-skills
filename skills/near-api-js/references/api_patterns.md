@@ -341,7 +341,7 @@ await account.addFunctionCallAccessKey({
   publicKey: fnKeyPair.getPublicKey(),
   contractId: "example-contract.testnet",
   methodNames: ["example_method"],
-  allowance: nearToYocto("0.25"), // put "0" for unlimited allowance
+  allowance: nearToYocto("0.25"), // the default if omitted; "0" is a zero budget, not unlimited
 });
 
 // Switch signer to use new key

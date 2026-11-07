@@ -71,4 +71,4 @@ for (const w of data.withdrawals) {
 }
 ```
 
-Used with `swapType: 'ANY_INPUT'` quotes where multiple deposits accumulate until deadline, then withdraw.
+Used with `swapType: 'ANY_INPUT'` quotes, where deposits accumulate and are swept to `recipient` once the pool clears $1,000 USD.

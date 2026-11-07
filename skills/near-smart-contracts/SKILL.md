@@ -1,10 +1,10 @@
 ---
 name: near-smart-contracts
-description: NEAR Protocol smart contract development in Rust. Use when writing, reviewing, or deploying NEAR smart contracts. Covers contract structure, state management, cross-contract calls, testing, security, and optimization patterns. Based on near-sdk v5.x with modern macro syntax.
+description: NEAR Protocol smart contract development in Rust. Use when writing, reviewing, or deploying NEAR smart contracts, including a first hello-world contract, a contract that stores data for each user or tracks user balances, control over which accounts may call which methods, or calls between contracts. Covers contract structure, state management with SDK collections (LookupMap, IterableMap), access control with predecessor_account_id, cross-contract calls, testing, security, and optimization patterns. Based on near-sdk v5.x with modern macro syntax.
 license: MIT
 metadata:
   author: near
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # NEAR Smart Contracts Development

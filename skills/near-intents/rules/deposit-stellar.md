@@ -15,7 +15,7 @@ const quote = await fetch('https://1click.chaindefuser.com/v0/quote', {
   body: JSON.stringify({
     dry: false,
     depositMode: 'MEMO',  // REQUIRED for Stellar
-    originAsset: 'nep141:stellar-native.omft.near',
+    originAsset: 'nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz',
     destinationAsset: 'nep141:wrap.near',
     amount: '10000000', // 1 XLM in stroops
     recipient: 'user.near',

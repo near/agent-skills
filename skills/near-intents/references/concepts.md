@@ -33,7 +33,7 @@ Request Quote → Deposit Tokens → Submit Tx Hash → Monitor Status → Succe
 | `KNOWN_DEPOSIT_TX` | No | Deposit transaction detected |
 | `PROCESSING` | No | Swap being executed by Market Makers |
 | `SUCCESS` | Yes | Tokens delivered to recipient |
-| `INCOMPLETE_DEPOSIT` | Yes | Deposit below required amount |
+| `INCOMPLETE_DEPOSIT` | No | Deposit below required amount, refunded by the deadline |
 | `REFUNDED` | Yes | Swap failed, funds returned to refund address |
 | `FAILED` | Yes | Error occurred |
 
