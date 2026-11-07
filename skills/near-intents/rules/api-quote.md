@@ -108,13 +108,17 @@ Variable input with slippage range. Good for "swap all" scenarios.
 
 ### ANY_INPUT
 
-Accumulating deposits. Multiple deposits accepted until deadline.
+Partner-only deposit-and-sweep account. Requests without a valid partner are rejected.
 
 ```typescript
-{ swapType: 'ANY_INPUT', amount: '0' } // No fixed amount
+{ swapType: 'ANY_INPUT', originAsset: '1cs_v1:any', depositType: 'INTENTS', amount: '0' } // No fixed origin or amount
 ```
 
-**Use case:** Aggregate multiple deposits, then withdraw via `/v0/any-input/withdrawals`
+- Deposits accumulate, are converted to `destinationAsset` and withdrawn to `recipient` once the pool clears $1,000 USD
+- `deadline` is checked only at creation; the collector then runs indefinitely
+- No refunds: a failed swap retries every 5 minutes, so set `refundTo` to an address you control
+
+**Use case:** Fee aggregation. Track sweeps via `/v0/any-input/withdrawals`
 
 ---
 
@@ -215,7 +219,7 @@ const stellarQuote = await fetch('https://1click.chaindefuser.com/v0/quote', {
     dry: false,
     depositMode: 'MEMO', // REQUIRED for Stellar
     swapType: 'EXACT_INPUT',
-    originAsset: 'nep141:stellar-native.omft.near',
+    originAsset: 'nep245:v2_1.omni.hot.tg:1100_111bzQBB5v7AhLyPMDwS8uJgQV24KaAPXtwyVWu2KXbbfQU6NXRCz',
     destinationAsset: 'nep141:wrap.near',
     amount: '10000000', // 1 XLM (7 decimals)
     recipient: 'user.near',

@@ -159,7 +159,7 @@ function useSwapStatus(depositAddress: string | null, apiKey?: string) {
     enabled: !!depositAddress,
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      if (['SUCCESS', 'FAILED', 'REFUNDED', 'INCOMPLETE_DEPOSIT'].includes(status || '')) {
+      if (['SUCCESS', 'FAILED', 'REFUNDED'].includes(status || '')) {
         return false;
       }
       return 2000;
@@ -348,7 +348,7 @@ function SwapWidgetInner({ apiKey }: { apiKey?: string }) {
 
   const isTerminal =
     statusData?.status &&
-    ['SUCCESS', 'FAILED', 'REFUNDED', 'INCOMPLETE_DEPOSIT'].includes(statusData.status);
+    ['SUCCESS', 'FAILED', 'REFUNDED'].includes(statusData.status);
 
   const isSwapping = executeSwap.isPending || (depositAddress && !isTerminal);
 

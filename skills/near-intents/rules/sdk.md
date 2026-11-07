@@ -38,7 +38,7 @@ import type { QuoteRequest } from '@defuse-protocol/one-click-sdk-typescript';
 
 // Base URL defaults to https://1click.chaindefuser.com
 OpenAPI.BASE = 'https://1click.chaindefuser.com';
-// Required for getQuote, submitDepositTx, getExecutionStatus
+// Optional for getQuote, submitDepositTx, getExecutionStatus; quotes without it carry an extra 0.25% fee
 OpenAPI.TOKEN = 'YOUR_JWT_TOKEN';
 
 // 1. Tokens (no auth required)
@@ -120,8 +120,8 @@ let status = one_click_api::get_execution_status(&config, deposit_address).await
 | SDK method | HTTP endpoint | Auth |
 |------------|---------------|------|
 | `getTokens` | `GET /v0/tokens` | none |
-| `getQuote` | `POST /v0/quote` | JWT |
-| `submitDepositTx` | `POST /v0/deposit/submit` | JWT |
-| `getExecutionStatus` | `GET /v0/status` | JWT |
+| `getQuote` | `POST /v0/quote` | optional JWT |
+| `submitDepositTx` | `POST /v0/deposit/submit` | optional JWT |
+| `getExecutionStatus` | `GET /v0/status` | optional JWT |
 
 Terminal statuses: `SUCCESS`, `REFUNDED`, `FAILED` (see `api-status.md`). The User Auth / Balance / Order endpoints are available via dedicated services (e.g. `UserAuthService.authenticate`) — see `api-user-auth.md`.

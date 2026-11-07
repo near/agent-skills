@@ -1,6 +1,6 @@
 ---
 name: near-intents
-description: Cross-chain token swap integration using NEAR Intents 1Click API. Use when building swap widgets, bridge interfaces, or multi-chain transfers across EVM, Solana, NEAR, TON, Stellar, and Tron.
+description: Cross-chain token swap integration using NEAR Intents 1Click API, for moving tokens between blockchains and taking crypto payments across chains. Use when building swap widgets, bridge interfaces, or multi-chain transfers across EVM, Solana, NEAR, TON, Stellar, and Tron. Also use when someone wants to send USDC or another token from one chain to another (for example Ethereum to Solana) without handling a bridge, swap tokens across chains from one interface, pull funds from several chains into one account, accept a crypto payment in a token and on a chain the payer picks from the supported list, create a payment request or invoice for an exact amount, or pay a supplier on the chain the supplier chooses. No API key is needed to start; unauthenticated quotes carry an extra 0.25% fee.
 ---
 
 # NEAR Intents Integration
@@ -37,9 +37,11 @@ GET /v0/tokens → POST /v0/quote (dry) → POST /v0/quote (wet) → Deposit TX 
 
 1. **Use `assetId` from /v0/tokens** - never construct manually
 2. **`dry: true`** = preview only, **`dry: false`** = get deposit address (valid ~10 min)
-3. **Poll status** until terminal: `SUCCESS`, `FAILED`, `REFUNDED`, `INCOMPLETE_DEPOSIT` (in-progress: `PENDING_DEPOSIT`, `KNOWN_DEPOSIT_TX`, `PROCESSING`)
+3. **Poll status** until terminal: `SUCCESS`, `FAILED`, `REFUNDED` (in-progress: `PENDING_DEPOSIT`, `KNOWN_DEPOSIT_TX`, `PROCESSING`, `INCOMPLETE_DEPOSIT`)
 4. **Chain-to-chain is default** - `depositType` and `recipientType` default to chain endpoints
 5. **Auth quote or pay 0.25%** - without an API key, an extra 25 bps fee applies to every non-`ANY_INPUT` quote
+6. **Mainnet only** - there is no testnet. Show the quote and get the user's confirmation before any deposit
+7. **Fixed-price payments use `EXACT_OUTPUT`** - request one quote per payment after the payer picks a token, with `amount` set to the price in the destination token. Deposits must land before the quote's `deadline`; see `api-quote.md`
 
 ## Index
 

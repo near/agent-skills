@@ -5,9 +5,9 @@ Verify that the NEAR AI Cloud API gateway runs inside a genuine TEE. Two steps:
 1. [Request gateway attestation](#request-gateway-attestation) from NEAR AI Cloud
 2. [Verify the attestation](#verifying-gateway-attestation) via Intel TDX
 
-Source: https://docs.near.ai/cloud/verification/gateway
+Source: https://docs.near.ai/cloud/verification/cloud-api/gateway-attestation
 
-> **Direct completions — no gateway verification needed.** Requests to a model's direct completions endpoint (e.g. `https://qwen35-122b.completions.near.ai`) skip the gateway entirely; only [Model Verification](model-verification.md) is required.
+> **Direct completions — no gateway verification needed.** Requests to a model's direct completions endpoint (e.g. `https://glm-5-3-flash.completions.near.ai`) skip the gateway entirely; only [Model Verification](model-verification.md) is required.
 
 > Working implementation: [NEAR AI Cloud Verifier](https://github.com/nearai/nearai-cloud-verifier)
 
@@ -22,15 +22,14 @@ GET https://cloud-api.near.ai/v1/attestation/report?signing_algo=ecdsa&nonce={no
 - Omit `model` to get **gateway** attestation (with `model`, the response also includes the gateway attestation alongside model attestations)
 - `signing_algo` — `ecdsa` or `ed25519`
 - `nonce` — random 64-char hex (32 bytes), optional but recommended; server generates one if omitted
-- **Requires an API key** (`Authorization: Bearer <api-key>`); report retrieval is free and never counts against usage
+- No API key needed; report retrieval is free and never counts against usage
 - Add `include_tls_fingerprint=true` to bind the gateway's TLS certificate fingerprint into `report_data` (see TLS verification note below)
 
 ```bash
 NONCE=$(openssl rand -hex 32)
 
 curl "https://cloud-api.near.ai/v1/attestation/report?signing_algo=ecdsa&nonce=${NONCE}" \
-  -H 'accept: application/json' \
-  -H 'Authorization: Bearer <YOUR-NEAR-AI-CLOUD-API-KEY>'
+  -H 'accept: application/json'
 ```
 
 ```js
@@ -43,14 +42,12 @@ const response = await fetch(
   {
     headers: {
       'accept': 'application/json',
-      'Authorization': `Bearer ${process.env.NEAR_AI_CLOUD_API_KEY}`,
     },
   }
 );
 ```
 
 ```python
-import os
 import requests
 import secrets
 
@@ -58,10 +55,7 @@ nonce = secrets.token_hex(32)
 
 response = requests.get(
     'https://cloud-api.near.ai/v1/attestation/report?signing_algo=ecdsa&nonce=' + nonce,
-    headers={
-        'accept': 'application/json',
-        'Authorization': f'Bearer {os.environ["NEAR_AI_CLOUD_API_KEY"]}',
-    }
+    headers={'accept': 'application/json'}
 )
 ```
 

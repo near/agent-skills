@@ -44,7 +44,7 @@ from cryptography.hazmat.primitives import hashes
 
 ENDPOINT = "https://cloud-api.near.ai"
 API_KEY  = "sk-..."
-MODEL    = "zai-org/GLM-5.1-FP8"
+MODEL    = "z-ai/glm-5.3-flash"
 
 def v2_encrypt(plaintext: bytes, recipient_x25519_pub: bytes) -> bytes:
     eph = X25519PrivateKey.generate()
@@ -61,10 +61,9 @@ def v2_decrypt(data: bytes, secret_x25519: bytes) -> bytes:
     key = HKDF(hashes.SHA256(), 32, None, b"ed25519_encryption").derive(shared)
     return crypto_aead_xchacha20poly1305_ietf_decrypt(ct, None, nonce, key)
 
-# 1. Model's Ed25519 public key (from attestation; gateway version requires API key)
+# 1. Model's Ed25519 public key (from attestation)
 attestation = requests.get(
     f"{ENDPOINT}/v1/attestation/report",
-    headers={"Authorization": f"Bearer {API_KEY}"},
     params={"model": MODEL, "signing_algo": "ed25519"},
 ).json()
 model_ed25519_pub = bytes.fromhex(attestation["model_attestations"][0]["signing_public_key"])

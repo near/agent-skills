@@ -1,14 +1,14 @@
 ---
 name: near-ai-cloud
-description: NEAR AI Cloud private inference and verification. Use when integrating NEAR AI Cloud API for verifiable private AI inference, verifying model or gateway TEE attestation (NVIDIA NRAS, Intel TDX), verifying chat message signatures, implementing end-to-end encrypted chat, using specialized TEE endpoints (embeddings, reranking, images, audio, PII redaction), or using the OpenAI-compatible API with NEAR AI Cloud.
+description: NEAR AI Cloud private inference and verification. Run LLM inference on private or sensitive data so that neither the host nor the model provider can read it, using the private (Confidential TEE) models on NEAR AI Cloud's OpenAI-compatible API, which run inside trusted execution environments (Intel TDX, NVIDIA confidential GPUs), with hardware attestation and response signatures you can verify. Use when integrating NEAR AI Cloud API for verifiable private AI inference, verifying model or gateway TEE attestation (NVIDIA NRAS, Intel TDX), verifying chat message signatures, implementing end-to-end encrypted chat, using specialized TEE endpoints (embeddings, reranking, images, audio, PII redaction), or using the OpenAI-compatible API with NEAR AI Cloud. Also use when someone needs confidential or private AI inference, wants an AI to analyze private business data safely, needs verifiable or attested inference with a receipt, or wants an OpenAI-compatible endpoint that keeps prompts private.
 metadata:
   author: near
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # NEAR AI Cloud
 
-Verifiable private AI inference through Trusted Execution Environments (TEEs). All inference runs inside Intel TDX confidential VMs with NVIDIA TEE GPUs — your data stays encrypted and isolated from infrastructure providers, model providers, and NEAR itself.
+Verifiable private AI inference through Trusted Execution Environments (TEEs). Private (Confidential TEE) models run inside Intel TDX confidential VMs with NVIDIA TEE GPUs — your data stays encrypted and isolated from infrastructure providers, model providers, and NEAR itself. Other models in the catalog have different guarantees; see [Models and Privacy Tiers](references/models-and-privacy-tiers.md).
 
 ## Quick Start
 
@@ -23,7 +23,7 @@ client = openai.OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="deepseek-ai/DeepSeek-V3.1",
+    model="z-ai/glm-5.3-flash",
     messages=[{"role": "user", "content": "Hello, NEAR AI!"}]
 )
 print(response.choices[0].message.content)
@@ -38,7 +38,7 @@ const openai = new OpenAI({
 });
 
 const completion = await openai.chat.completions.create({
-    model: 'deepseek-ai/DeepSeek-V3.1',
+    model: 'z-ai/glm-5.3-flash',
     messages: [{ role: 'user', content: 'Hello, NEAR AI!' }]
 });
 console.log(completion.choices[0].message.content);
@@ -46,10 +46,10 @@ console.log(completion.choices[0].message.content);
 
 ## How It Works
 
-- All inference runs inside **Intel TDX** confidential VMs with **NVIDIA TEE** GPUs
+- Private model inference runs inside **Intel TDX** confidential VMs with **NVIDIA TEE** GPUs
 - TLS terminates **inside the TEE**, not at a load balancer — prompts are never exposed in plaintext
 - TEEs generate **cryptographic attestation proofs** verifiable via NVIDIA NRAS and Intel TDX
-- Every chat response is **signed by a key that never leaves the TEE**
+- Responses can carry a **`provider_tee`** signature from the model TEE or a **`gateway`** signature from the gateway TEE. Only `provider_tee` binds a response to a model-serving TEE
 - You can independently verify hardware attestation and bind it to message signatures
 
 ## Verification Flow
@@ -73,25 +73,26 @@ Base URL: `https://cloud-api.near.ai`
 |-------------------------------------------------|--------|----------------------------------------------------|
 | `/v1/chat/completions`                          | POST   | OpenAI-compatible chat completions                 |
 | `/v1/models`                                    | GET    | List available models                              |
-| `/v1/attestation/report?model={model}`          | GET    | Model attestation (GPU + CPU) — **requires API key** |
-| `/v1/attestation/report`                        | GET    | Gateway attestation — requires API key             |
+| `/v1/attestation/report?model={model}`          | GET    | Model attestation (GPU + CPU)                      |
+| `/v1/attestation/report`                        | GET    | Gateway attestation                                |
 | `/v1/signature/{chat_id}`                       | GET    | Chat message signature (also covers Responses API `resp_*`) |
 
 ## Critical Knowledge
 
 - Base URL is `https://cloud-api.near.ai/v1` — use with any OpenAI SDK
 - `signing_algo` can be `ecdsa` or `ed25519`
-- **Attestation report now requires an API key** — `Authorization: Bearer <key>`; retrieval is free and non-billable
+- Take model IDs from `GET /v1/models`, which needs no key. Older IDs can return 404 or resolve as aliases, and a resolved alias gets a `gateway` signature
+- Attestation reports need no API key, except for a model enabled only for your organization; retrieval is free and non-billable
 - Nonce should be a random 64-char hex string (32 bytes) for attestation freshness
 - NRAS response is a two-part array: `[["JWT", "..."], {"GPU-0": "..."}]` — overall JWT + per-GPU JWTs
-- The `signing_address` from model attestation **must match** the address that signed chat messages
-- Chat signatures are persistent and can be queried at any time after completion
+- For a `provider_tee` signature, the `signing_address` from model attestation **must match** the address that signed the response
+- Response records expire after 60 minutes by default, so verify soon after completion
 
 ## References
 
 | Topic                            | File                                                                                |
 |----------------------------------|-------------------------------------------------------------------------------------|
-| **Private vs Anonymised Models** | [references/private-vs-anonymised.md](references/private-vs-anonymised.md)           |
+| **Models and privacy tiers**     | [references/models-and-privacy-tiers.md](references/models-and-privacy-tiers.md)     |
 | **Model TEE verification**       | [references/model-verification.md](references/model-verification.md)                |
 | **Gateway verification + TLS**   | [references/gateway-verification.md](references/gateway-verification.md)            |
 | **Chat message verification**    | [references/chat-verification.md](references/chat-verification.md)                  |

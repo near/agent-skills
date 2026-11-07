@@ -27,7 +27,7 @@ import { mainnet, base, arbitrum } from 'viem/chains';
 
 const API_BASE = 'https://1click.chaindefuser.com';
 const PRIVATE_KEY = process.env.PRIVATE_KEY as `0x${string}`;
-const API_KEY = process.env.ONE_CLICK_API_KEY; // Optional, avoids 0.1% fee
+const API_KEY = process.env.ONE_CLICK_API_KEY; // Optional, avoids the extra 0.25% fee
 
 const CHAINS = { eth: mainnet, base: base, arb: arbitrum };
 
@@ -111,7 +111,7 @@ async function submitDeposit(txHash: string, depositAddress: string): Promise<vo
 }
 
 async function pollStatus(depositAddress: string): Promise<StatusResponse> {
-  const terminalStates = ['SUCCESS', 'FAILED', 'REFUNDED', 'INCOMPLETE_DEPOSIT'];
+  const terminalStates = ['SUCCESS', 'FAILED', 'REFUNDED'];
 
   for (let i = 0; i < 180; i++) { // Max 6 minutes
     const res = await fetch(

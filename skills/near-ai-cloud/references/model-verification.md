@@ -19,7 +19,7 @@ GET https://cloud-api.near.ai/v1/attestation/report?model={model_name}&signing_a
 
 **Parameters:**
 
-- `model` — Model name (e.g. `deepseek-ai/DeepSeek-V3.1`)
+- `model` — Model name (e.g. `z-ai/glm-5.3-flash`)
 - `signing_algo` — `ecdsa` or `ed25519`
 - `nonce` — Random 64-char hex string (32 bytes). Optional but recommended for freshness/replay prevention
 
@@ -28,24 +28,23 @@ GET https://cloud-api.near.ai/v1/attestation/report?model={model_name}&signing_a
 ```bash
 NONCE=$(openssl rand -hex 32)
 
-curl "https://cloud-api.near.ai/v1/attestation/report?model=deepseek-ai/DeepSeek-V3.1&signing_algo=ecdsa&nonce=${NONCE}" \
-  -H 'accept: application/json' \
-  -H 'Authorization: Bearer <YOUR-NEAR-AI-CLOUD-API-KEY>'
+curl "https://cloud-api.near.ai/v1/attestation/report?model=z-ai/glm-5.3-flash&signing_algo=ecdsa&nonce=${NONCE}" \
+  -H 'accept: application/json'
 ```
 
-> **API key required.** The attestation report endpoint requires authentication (`nearai/infra#193`); report retrieval is non-billable — no usage or billing records are created.
+> **No API key needed**, except for a model enabled only for your organization. Report retrieval is non-billable: no usage or billing records are created.
 
 ### JavaScript
 
 ```js
 import crypto from 'crypto';
 
-const MODEL_NAME = 'deepseek-ai/DeepSeek-V3.1';
+const MODEL_NAME = 'z-ai/glm-5.3-flash';
 const nonce = crypto.randomBytes(32).toString('hex');
 
 const response = await fetch(
   `https://cloud-api.near.ai/v1/attestation/report?model=${MODEL_NAME}&signing_algo=ecdsa&nonce=${nonce}`,
-  { headers: { 'accept': 'application/json', 'Authorization': `Bearer ${process.env.NEAR_AI_CLOUD_API_KEY}` } }
+  { headers: { 'accept': 'application/json' } }
 );
 
 const data = await response.json();
@@ -60,12 +59,12 @@ const data = await response.json();
 import requests
 import secrets
 
-MODEL_NAME = 'deepseek-ai/DeepSeek-V3.1'
+MODEL_NAME = 'z-ai/glm-5.3-flash'
 nonce = secrets.token_hex(32)
 
 response = requests.get(
     f'https://cloud-api.near.ai/v1/attestation/report?model={MODEL_NAME}&signing_algo=ecdsa&nonce={nonce}',
-    headers={'accept': 'application/json', 'Authorization': f'Bearer {os.environ["NEAR_AI_CLOUD_API_KEY"]}'}
+    headers={'accept': 'application/json'}
 )
 
 data = response.json()
@@ -88,7 +87,7 @@ data = response.json()
 }
 ```
 
-- `model_attestations` — List of attestations from all GPU nodes serving this model (multiple TEE nodes may be active)
+- `model_attestations`: NEAR model-report candidates for this model. Verify every returned candidate. The field is omitted when no candidate is available
 - `signing_address` — Public key generated inside the TEE. Used to sign chat responses. **This is the key binding** — verify it matches the signer of chat message signatures
 - `nvidia_payload` — JSON object to submit to NVIDIA NRAS for GPU verification
 - `intel_quote` — TDX quote for Intel CPU TEE verification
@@ -256,7 +255,7 @@ Verifying only the `nvidia_payload` (GPU attestation) is **not sufficient**. You
 
 ### 5. Not binding signing_address to chat signatures
 
-After attestation, when you verify chat message signatures, the recovered signer address **must match** the `signing_address` from the attestation. This is the complete chain of trust:
+After attestation, when you verify a `provider_tee` signature, the recovered signer address **must match** the `signing_address` from the attestation. This is the complete chain of trust:
 
 ```
 GPU hardware (NRAS) → CPU TEE (TDX) → signing_address (bound in TDX report) → chat signature
